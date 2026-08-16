@@ -1,0 +1,33 @@
+# Mayra Store — FastAPI backend
+#
+# Install:   myenv\Scripts\activate  &&  pip install -r backend/requirements.txt
+#
+# DEPLOY NOTE: Vercel's Python runtime resolves `requirements.txt` from the REPO ROOT.
+# Before the first deploy, create a root-level requirements.txt containing:
+#     -r backend/requirements.txt
+# See plans/07-deployment-vercel.md §2.
+
+# --- Web framework -----------------------------------------------------------
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.34,<1.0      # local dev server only; Vercel runs the ASGI app itself
+python-multipart>=0.0.20,<0.1     # multipart/form-data — admin product-image uploads
+
+# --- Validation & settings ---------------------------------------------------
+pydantic>=2.9,<3.0
+pydantic-settings>=2.6,<3.0       # typed .env loading (Settings object)
+email-validator>=2.2,<3.0         # backs pydantic's EmailStr
+python-dotenv>=1.0,<2.0
+
+# --- Database: Supabase Postgres ---------------------------------------------
+sqlalchemy>=2.0,<2.1
+psycopg[binary]>=3.2,<4.0         # psycopg 3; use the transaction pooler (port 6543)
+alembic>=1.14,<2.0                # schema migrations
+
+# --- Admin auth --------------------------------------------------------------
+pyjwt>=2.10,<3.0                  # HS256 session tokens for the admin panel
+
+# --- Outbound HTTP: Brevo email + Supabase Storage uploads --------------------
+httpx>=0.27,<1.0
+
+# --- HTML email templates ----------------------------------------------------
+jinja2>=3.1,<4.0

@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Jost:wght@300;400;500&family=Parisienne&family=Cormorant+Garamond:wght@400;500;600&display=swap');
+  body{margin:0;background:#f5ead8}
+  *{box-sizing:border-box}
+  *:focus-visible{outline:2px solid #c8a24a;outline-offset:2px}
+  a{color:#97741f;text-decoration:none}
+  a:hover{color:#c8a24a}
+  input,select{font-family:'Cormorant Garamond',Georgia,serif;font-size:16px}
+  .mrow:hover .mimg{transform:scale(1.045)}
+  .mimg{transition:transform .5s ease}
+  ::-webkit-scrollbar{height:6px}
+</style>
+</helmet>
+<div style="--gold-100:#faf1de;--gold-300:#e6cf9a;--gold-500:#c8a24a;--gold-700:#97741f;--forest-500:#3d4a35;--forest-700:#2d3a2b;--clay-500:#d67f48;--bg:#f5ead8;--surface:#fdf8ef;--ink:#2e2b25;font-family:'Cormorant Garamond',Georgia,serif;color:var(--ink);background:var(--bg);min-height:100vh;position:relative;padding-bottom:{{ bottomPad }}px">
+
+  <!-- HEADER -->
+  <div style="position:sticky;top:0;z-index:30;background:rgba(245,234,216,0.94);backdrop-filter:blur(8px);border-bottom:1px solid rgba(46,43,37,0.12)">
+    <div style="max-width:1180px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:24px">
+      <div onClick="{{ goLanding }}" role="button" tabIndex="0" style="cursor:pointer;font-family:'Playfair Display',serif;font-size:24px;letter-spacing:0.32em;font-weight:600">MAYRA</div>
+      <sc-if value="{{ showDesktopNav }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;gap:22px;margin-left:8px;font-family:'Jost',sans-serif;font-size:13px;letter-spacing:0.12em;text-transform:uppercase">
+          <span onClick="{{ goShop }}" style="cursor:pointer;padding-bottom:4px;border-bottom:{{ shopUnderline }}">Shop</span>
+          <span onClick="{{ goCollection }}" style="cursor:pointer;padding-bottom:4px;border-bottom:{{ collectionUnderline }}">Golden Essence</span>
+          <span onClick="{{ goAbout }}" style="cursor:pointer;padding-bottom:4px;border-bottom:{{ aboutUnderline }}">About</span>
+        </div>
+      </sc-if>
+      <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+        <span onClick="{{ reopenPopup }}" style="cursor:pointer;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.08em;background:var(--gold-100);color:var(--gold-700);padding:6px 12px;border-radius:999px;font-weight:500">20% OFF</span>
+        <button aria-label="Search" onClick="{{ toggleSearch }}" style="width:40px;height:40px;border-radius:999px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        </button>
+        <button aria-label="Wishlist" onClick="{{ goWishlist }}" style="position:relative;width:40px;height:40px;border-radius:999px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
+          <sc-if value="{{ wishCount }}" hint-placeholder-val="{{ 0 }}"><span style="position:absolute;top:2px;right:2px;min-width:16px;height:16px;border-radius:999px;background:var(--forest-500);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-family:'Jost',sans-serif">{{ wishCount }}</span></sc-if>
+        </button>
+        <button aria-label="Bag" onClick="{{ goCart }}" style="position:relative;width:40px;height:40px;border-radius:999px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+          <sc-if value="{{ cartCount }}" hint-placeholder-val="{{ 0 }}"><span style="position:absolute;top:2px;right:2px;min-width:16px;height:16px;border-radius:999px;background:var(--forest-500);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-family:'Jost',sans-serif">{{ cartCount }}</span></sc-if>
+        </button>
+      </div>
+    </div>
+    <sc-if value="{{ searchOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:0 20px 16px;max-width:1180px;margin:0 auto">
+        <input autoFocus="{{ true }}" value="{{ searchQuery }}" onChange="{{ onSearchInput }}" placeholder="Search pieces, materials, collections…" aria-label="Search" style="width:100%;padding:12px 16px;border-radius:999px;border:1px solid rgba(46,43,37,0.2);background:var(--surface);font-size:16px">
+        <div aria-live="polite" style="font-family:'Jost',sans-serif;font-size:12px;letter-spacing:0.05em;color:rgba(46,43,37,0.55);margin-top:8px">{{ searchResultLabel }}</div>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- ANNOUNCEMENT BAR -->
+  <sc-if value="{{ announcementVisible }}" hint-placeholder-val="{{ false }}">
+    <div style="background:var(--forest-500);color:#f4efe4;display:flex;align-items:center;justify-content:center;gap:14px;padding:10px 16px;font-family:'Jost',sans-serif;font-size:12.5px;letter-spacing:0.04em;flex-wrap:wrap;text-align:center">
+      <span>Launch offer — 20% off everything with code <strong>MAYRA20</strong></span>
+      <button onClick="{{ announceShopNow }}" style="background:none;border:1px solid rgba(244,239,228,0.5);color:#f4efe4;padding:5px 12px;border-radius:999px;cursor:pointer;font-family:'Jost',sans-serif;font-size:12px">Shop now</button>
+      <button aria-label="Dismiss" onClick="{{ dismissAnnouncement }}" style="background:none;border:none;color:#f4efe4;cursor:pointer;font-size:16px;line-height:1;padding:4px">×</button>
+    </div>
+  </sc-if>
+
+  <!-- LANDING -->
+  <sc-if value="{{ isLanding }}" hint-placeholder-val="{{ true }}" data-screen-label="Landing">
+  <div>
+    <div style="max-width:820px;margin:0 auto;padding:clamp(56px,12vw,96px) 24px 40px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px">
+      <h1 style="font-family:'Playfair Display',serif;font-weight:600;font-size:clamp(34px,8vw,64px);line-height:1.08;margin:0">Jewels that speak<br>for you.</h1>
+      <div style="display:flex;align-items:center;gap:12px;color:var(--gold-700)"><span style="width:40px;height:1px;background:var(--gold-500)"></span><span>✦</span><span style="width:40px;height:1px;background:var(--gold-500)"></span></div>
+      <div style="font-family:'Parisienne',cursive;font-size:clamp(22px,4vw,30px);color:var(--forest-700)">every piece, a part of you</div>
+      <button onClick="{{ goShop }}" style="margin-top:10px;background:var(--gold-500);color:#fff;border:none;padding:15px 34px;border-radius:999px;font-family:'Jost',sans-serif;font-size:13px;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;min-height:44px" style-hover="background:var(--gold-700)">Enter the collection</button>
+    </div>
+
+    <div style="max-width:1180px;margin:0 auto;padding:0 20px 48px;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px">
+      <sc-for list="{{ categoryDoors }}" as="d" hint-placeholder-count="4">
+        <button onClick="{{ d.onClick }}" style="background:var(--surface);border:1px solid rgba(46,43,37,0.1);border-radius:20px;padding:24px 12px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;min-height:44px" style-hover="border-color:var(--gold-500)">
+          <span style="color:var(--gold-700)" dangerouslySetInnerHTML-skip="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="9" r="4"></circle><path d="M12 13v7"></path></svg>
+          </span>
+          <span style="font-family:'Jost',sans-serif;font-size:12.5px;letter-spacing:0.08em;text-transform:uppercase">{{ d.label }}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="background:var(--surface);padding:20px;display:flex;justify-content:center;gap:28px;flex-wrap:wrap;font-family:'Jost',sans-serif;font-size:11.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--forest-700)">
+      <span>Timeless designs</span><span>Premium quality</span><span>Made for you</span>
+    </div>
+
+    <div style="max-width:1180px;margin:0 auto;padding:56px 20px 20px">
+      <h2 style="font-family:'Playfair Display',serif;font-size:clamp(24px,4vw,30px);margin:0 0 24px;text-align:center">Featured pieces</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:22px">
+        <sc-for list="{{ featuredCards }}" as="c" hint-placeholder-count="4">
+          <div class="mrow" style="display:flex;flex-direction:column;gap:10px">
+            <div style="position:relative;border-radius:18px;overflow:hidden;aspect-ratio:1/1;background:var(--gold-100)">
+              <img class="mimg" onClick="{{ c.onOpen }}" src="{{ c.img }}" alt="{{ c.alt }}" style="width:100%;height:100%;object-fit:cover;cursor:pointer">
+              <button aria-label="{{ c.heartLabel }}" onClick="{{ c.onToggleWish }}" style="position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:999px;border:none;background:rgba(253,248,239,0.92);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                <sc-if value="{{ c.isWished }}" hint-placeholder-val="{{ false }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="#97741f" stroke="#97741f" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg></sc-if>
+                <sc-if value="{{ c.isWishedNot }}" hint-placeholder-val="{{ true }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2e2b25" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg></sc-if>
+              </button>
+              <sc-if value="{{ c.badgeText }}" hint-placeholder-val="{{ null }}"><span style="{{ c.badgeStyle }}">{{ c.badgeText }}</span></sc-if>
+            </div>
+            <div style="display:flex;justify-content:space-between;gap:8px;font-family:'Playfair Display',serif;font-size:16px"><span onClick="{{ c.onOpen }}" style="cursor:pointer">{{ c.name }}</span><span style="color:var(--gold-700);white-space:nowrap">{{ c.priceLabel }}</span></div>
+            <sc-if value="{{ c.lowStockLabel }}" hint-placeholder-val="{{ null }}"><div style="font-family:'Jost',sans-serif;font-size:11.5px;color:var(--clay-500)">{{ c.lowStockLabel }}</div></sc-if>
+            <button onClick="{{ c.onAdd }}" style="min-height:44px;border-radius:999px;border:1px solid var(--gold-500);background:transparent;color:var(--gold-700);font-family:'Jost',sans-serif;font-size:12.5px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">{{ c.ctaLabel }}</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- SHOP -->
+  <sc-if value="{{ isShop }}" hint-placeholder-val="{{ false }}" data-screen-label="Shop">
+  <div style="max-width:1180px;margin:0 auto;padding:28px 20px 60px">
+    <h1 style="font-family:'Playfair Display',serif;font-size:clamp(28px,5vw,40px);margin:0 0 16px">{{ shopTitle }}</h1>
+    <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px">
+      <sc-for list="{{ categoryChips }}" as="ch" hint-placeholder-count="5">
+        <button onClick="{{ ch.onClick }}" style="{{ ch.style }}">{{ ch.label }}</button>
+      </sc-for>
+      <button onClick="{{ toggleInStockOnly }}" style="{{ inStockChipStyle }}">In stock only</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap">
+      <div aria-live="polite" style="font-family:'Jost',sans-serif;font-size:12.5px;color:rgba(46,43,37,0.6)">{{ resultCountLabel }}</div>
+      <select value="{{ sortBy }}" onChange="{{ onSortChange }}" style="padding:8px 12px;border-radius:10px;border:1px solid rgba(46,43,37,0.2);background:var(--surface)">
+        <sc-for list="{{ sortOptions }}" as="o" hint-placeholder-count="4"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+      </select>
+    </div>
+
+    <sc-if value="{{ shopEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;padding:64px 0;display:flex;flex-direction:column;align-items:center;gap:14px">
+        <p style="font-size:18px;margin:0">{{ shopEmptyMessage }}</p>
+        <button onClick="{{ shopEmptyAction }}" style="background:var(--gold-500);color:#fff;border:none;padding:12px 24px;border-radius:999px;cursor:pointer;font-family:'Jost',sans-serif;font-size:13px;min-height:44px">{{ shopEmptyActionLabel }}</button>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-top:24px;width:100%">
+          <sc-for list="{{ suggestedCards }}" as="c" hint-placeholder-count="4">
+            <div onClick="{{ c.onOpen }}" style="cursor:pointer;text-align:left">
+              <div style="border-radius:14px;overflow:hidden;aspect-ratio:1/1;margin-bottom:6px"><img src="{{ c.img }}" alt="{{ c.alt }}" style="width:100%;height:100%;object-fit:cover"></div>
+              <div style="font-size:14px">{{ c.name }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ shopHasResults }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:22px">
+        <sc-for list="{{ shopCards }}" as="c" hint-placeholder-count="6">
+          <div class="mrow" style="display:flex;flex-direction:column;gap:10px">
+            <div style="position:relative;border-radius:18px;overflow:hidden;aspect-ratio:1/1;background:var(--gold-100)">
+              <img class="mimg" onClick="{{ c.onOpen }}" src="{{ c.img }}" alt="{{ c.alt }}" style="width:100%;height:100%;object-fit:cover;cursor:pointer">
+              <button aria-label="{{ c.heartLabel }}" onClick="{{ c.onToggleWish }}" style="position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:999px;border:none;background:rgba(253,248,239,0.92);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                <sc-if value="{{ c.isWished }}" hint-placeholder-val="{{ false }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="#97741f" stroke="#97741f" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg></sc-if>
+                <sc-if value="{{ c.isWishedNot }}" hint-placeholder-val="{{ true }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2e2b25" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg></sc-if>
+              </button>
+              <sc-if value="{{ c.badgeText }}" hint-placeholder-val="{{ null }}"><span style="{{ c.badgeStyle }}">{{ c.badgeText }}</span></sc-if>
+            </div>
+            <div style="display:flex;justify-content:space-between;gap:8px;font-family:'Playfair Display',serif;font-size:16px"><span onClick="{{ c.onOpen }}" style="cursor:pointer">{{ c.name }}</span><span style="color:var(--gold-700);white-space:nowrap">{{ c.priceLabel }}</span></div>
+            <sc-if value="{{ c.lowStockLabel }}" hint-placeholder-val="{{ null }}"><div style="font-family:'Jost',sans-serif;font-size:11.5px;color:var(--clay-500)">{{ c.lowStockLabel }}</div></sc-if>
+            <button onClick="{{ c.onAdd }}" style="min-height:44px;border-radius:999px;border:1px solid var(--gold-500);background:transparent;color:var(--gold-700);font-family:'Jost',sans-serif;font-size:12.5px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">{{ c.ctaLabel }}</button>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <!-- GOLDEN ESSENCE COLLECTION -->
+  <sc-if value="{{ isCollection }}" hint-placeholder-val="{{ false }}" data-screen-label="Golden Essence">
+  <div>
+    <div style="position:relative;min-height:280px;display:flex;align-items:center;overflow:hidden">
+      <img src="uploads/774726856_18085550231290966_5804073230857065908_n.jpg" alt="Golden Essence bracelets layered on a wrist" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(0.75) brightness(0.8)">
+      <div style="position:relative;padding:56px 24px;color:#fdf8ef;text-align:center;width:100%">
+        <div style="font-family:'Jost',sans-serif;letter-spacing:0.28em;font-size:13px;margin-bottom:10px">GOLDEN ESSENCE</div>
+        <div style="font-family:'Parisienne',cursive;font-size:clamp(24px,5vw,34px)">Layered to perfection, made to shine</div>
+      </div>
+    </div>
+    <div style="max-width:680px;margin:0 auto;padding:40px 24px 8px;text-align:center;font-size:18px;line-height:1.65">A good stack isn't random — start with one fine chain as your base, add a textured piece for contrast, and finish with something with a little weight to anchor the wrist. Every piece below is sized to layer with the others.</div>
+    <div style="max-width:1180px;margin:0 auto;padding:32px 20px 0;text-align:center">
+      <button onClick="{{ shopFullStack }}" style="background:var(--forest-500);color:#fff;border:none;padding:14px 30px;border-radius:999px;font-family:'Jost',sans-serif;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;min-height:44px">Shop the full stack</button>
+    </div>
+    <div style="max-width:1180px;margin:0 auto;padding:36px 20px 60px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:22px">
+      <sc-for list="{{ collectionCards }}" as="c" hint-placeholder-count="3">
+        <div class="mrow" style="display:flex;flex-direction:column;gap:10px">
+          <div style="position:relative;border-radius:18px;overflow:hidden;aspect-ratio:1/1;background:var(--gold-100)">
+            <img class="mimg" onClick="{{ c.onOpen }}" src="{{ c.img }}" alt="{{ c.alt }}" style="width:100%;height:100%;object-fit:cover;cursor:pointer">
+            <sc-if value="{{ c.badgeText }}" hint-placeholder-val="{{ null }}"><span style="{{ c.badgeStyle }}">{{ c.badgeText }}</span></sc-if>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:8px;font-family:'Playfair Display',serif;font-size:16px"><span onClick="{{ c.onOpen }}" style="cursor:pointer">{{ c.name }}</span><span style="color:var(--gold-700);white-space:nowrap">{{ c.priceLabel }}</span></div>
+          <button onClick="{{ c.onAdd }}" style="min-height:44px;border-radius:999px;border:1px solid var(--gold-500);background:transparent;color:var(--gold-700);font-family:'Jost',sans-serif;font-size:12.5px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">{{ c.ctaLabel }}</button>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- PRODUCT -->
+  <sc-if value="{{ isProduct }}" hint-placeholder-val="{{ false }}" data-screen-label="Product">
+  <div style="max-width:1180px;margin:0 auto;padding:20px 20px 90px">
+    <div onClick="{{ goShop }}" style="cursor:pointer;font-family:'Jost',sans-serif;font-size:12.5px;letter-spacing:0.06em;color:var(--gold-700);display:inline-flex;align-items:center;gap:6px;margin-bottom:20px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"></path></svg>BACK TO SHOP
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:44px;align-items:start">
+      <div style="position:sticky;top:90px">
+        <div style="border-radius:20px;overflow:hidden;aspect-ratio:1/1;filter:saturate(0.85)"><img src="{{ pdp.galleryMain }}" alt="{{ pdp.name }}" style="width:100%;height:100%;object-fit:cover"></div>
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:12px">
+          <sc-for list="{{ pdp.galleryDots }}" as="g" hint-placeholder-count="2">
+            <button aria-label="View image {{ g.n }}" onClick="{{ g.onClick }}" style="width:9px;height:9px;border-radius:999px;border:none;padding:0;background:{{ g.dotColor }};cursor:pointer"></button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <sc-if value="{{ pdp.badgeText }}" hint-placeholder-val="{{ null }}"><span style="{{ pdp.badgeStyle }}">{{ pdp.badgeText }}</span></sc-if>
+        <h1 style="font-family:'Playfair Display',serif;font-size:clamp(28px,4vw,38px);margin:0">{{ pdp.name }}</h1>
+        <div style="font-size:24px;color:var(--gold-700);font-weight:600">{{ pdp.priceLabel }}</div>
+        <div aria-live="polite" style="font-family:'Jost',sans-serif;font-size:12.5px;letter-spacing:0.04em;color:{{ pdp.stockColor }}">{{ pdp.stockLine }}</div>
+        <p style="font-size:17px;line-height:1.65;margin:0;max-width:48ch;text-wrap:pretty">{{ pdp.blurb }}</p>
+
+        <sc-for list="{{ pdp.optionRows }}" as="row" hint-placeholder-count="2">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="font-family:'Jost',sans-serif;font-size:11.5px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(46,43,37,0.6)">{{ row.label }}</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <sc-for list="{{ row.values }}" as="val" hint-placeholder-count="3">
+                <button title="{{ val.tooltip }}" aria-label="{{ val.label }}" aria-disabled="{{ val.ariaDisabled }}" disabled="{{ val.disabled }}" onClick="{{ val.onClick }}" style="{{ val.style }}">{{ val.text }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+
+        <sc-if value="{{ pdp.note }}" hint-placeholder-val="{{ null }}"><div style="font-size:14px;color:var(--forest-700);background:var(--gold-100);padding:10px 14px;border-radius:10px">{{ pdp.note }}</div></sc-if>
+
+        <div style="font-family:'Jost',sans-serif;font-size:12px;letter-spacing:0.04em;color:rgba(46,43,37,0.55)">{{ pdp.selectionSummary }}</div>
+
+        <sc-if value="{{ pdp.showQty }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="display:flex;align-items:center;gap:2px;border:1px solid rgba(46,43,37,0.2);border-radius:999px;padding:4px">
+              <button aria-label="Decrease quantity" disabled="{{ pdp.qtyDownDisabled }}" onClick="{{ pdp.qtyDown }}" style="width:36px;height:36px;border-radius:999px;border:none;background:transparent;font-size:18px;cursor:pointer">−</button>
+              <span style="min-width:28px;text-align:center;font-weight:600">{{ pdp.qty }}</span>
+              <button aria-label="Increase quantity" disabled="{{ pdp.qtyUpDisabled }}" onClick="{{ pdp.qtyUp }}" style="width:36px;height:36px;border-radius:999px;border:none;background:transparent;font-size:18px;cursor:pointer">+</button>
+            </div>
+            <sc-if value="{{ pdp.qtyCapLabel }}" hint-placeholder-val="{{ null }}"><span style="font-family:'Jost',sans-serif;font-size:12px;color:var(--clay-500)">{{ pdp.qtyCapLabel }}</span></sc-if>
+          </div>
+        </sc-if>
+
+        <div ref="{{ addToBagRef }}" style="display:flex;gap:12px;flex-wrap:wrap">
+          <button disabled="{{ pdp.ctaDisabled }}" onClick="{{ pdp.onCta }}" style="{{ pdp.ctaStyle }}">{{ pdp.ctaLabel }}</button>
+          <button onClick="{{ pdp.onWhatsapp }}" style="min-height:44px;border-radius:999px;border:1px solid var(--forest-500);background:transparent;color:var(--forest-700);font-family:'Jost',sans-serif;font-size:13px;letter-spacing:0.06em;padding:0 22px;cursor:pointer;display:flex;align-items:center;gap:8px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.4A10 10 0 1 0 12 2Zm5.3 14.3c-.2.6-1.4 1.2-2 1.3-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.4.7-.4h.5c.2 0 .4 0 .6.4.2.5.7 1.7.8 1.9.1.2.1.4 0 .6-.4.9-.9 1.1-1.2 1.5-.1.2-.3.4-.1.7.7 1.3 1.5 2.1 2.6 2.8.3.2.5.2.7 0 .2-.2.9-1 1.1-1.3.2-.3.4-.2.6-.1.2.1 1.5.7 1.8.8.3.1.5.2.5.4 0 .2 0 .8-.2 1.4Z"></path></svg>
+            Order on WhatsApp
+          </button>
+        </div>
+        <button onClick="{{ pdp.onToggleWish }}" style="align-self:flex-start;background:none;border:none;display:flex;align-items:center;gap:8px;color:var(--ink);cursor:pointer;font-family:'Jost',sans-serif;font-size:13px;padding:6px 0;min-height:44px">
+          <sc-if value="{{ pdp.isWished }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="#97741f" stroke="#97741f" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg></sc-if>
+          <sc-if value="{{ pdp.isWishedNot }}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg></sc-if>
+          {{ pdp.wishLabel }}
+        </button>
+
+        <sc-if value="{{ pdp.soldOutEverything }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--surface);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:'Jost',sans-serif;font-size:13px;letter-spacing:0.04em">Notify me when it's back</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input value="{{ pdp.notifyEmail }}" onChange="{{ pdp.onNotifyEmail }}" placeholder="you@example.com" style="flex:1;min-width:180px;padding:10px 14px;border-radius:999px;border:1px solid rgba(46,43,37,0.2)">
+              <button onClick="{{ pdp.onNotifySubmit }}" style="background:var(--forest-500);color:#fff;border:none;padding:0 20px;border-radius:999px;cursor:pointer;min-height:44px">Notify me</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="border-top:1px solid rgba(46,43,37,0.12);padding-top:16px;display:flex;flex-direction:column;gap:12px">
+          <button onClick="{{ pdp.toggleCare }}" aria-expanded="{{ pdp.careOpen }}" style="display:flex;justify-content:space-between;align-items:center;background:none;border:none;cursor:pointer;padding:8px 0;font-family:'Jost',sans-serif;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;min-height:44px">Care instructions<span>{{ pdp.careChevron }}</span></button>
+          <sc-if value="{{ pdp.careOpen }}" hint-placeholder-val="{{ false }}">
+            <ul style="margin:0;padding-left:20px;font-size:15px;line-height:1.6">
+              <sc-for list="{{ pdp.care }}" as="line" hint-placeholder-count="3"><li>{{ line }}</li></sc-for>
+            </ul>
+          </sc-if>
+          <button onClick="{{ pdp.openSizeGuide }}" style="text-align:left;background:none;border:none;cursor:pointer;padding:8px 0;font-family:'Jost',sans-serif;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold-700);min-height:44px">Size guide</button>
+          <div style="font-size:14.5px;color:rgba(46,43,37,0.75);line-height:1.6">{{ pdp.material }} — free delivery over Rs 5,000 · 7-day exchange.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding-top:64px">
+      <h2 style="font-family:'Playfair Display',serif;font-size:24px;margin:0 0 22px">You may also like</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px">
+        <sc-for list="{{ pdp.related }}" as="c" hint-placeholder-count="4">
+          <div onClick="{{ c.onOpen }}" style="cursor:pointer;display:flex;flex-direction:column;gap:8px">
+            <div style="border-radius:16px;overflow:hidden;aspect-ratio:1/1"><img src="{{ c.img }}" alt="{{ c.alt }}" style="width:100%;height:100%;object-fit:cover"></div>
+            <div style="font-family:'Playfair Display',serif;font-size:14px">{{ c.name }}</div>
+            <div style="font-size:13px;color:var(--gold-700)">{{ c.priceLabel }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <sc-if value="{{ pdp.sizeGuideOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ pdp.closeSizeGuide }}" style="position:fixed;inset:0;background:rgba(46,43,37,0.55);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px">
+      <div onClick="{{ stopClick }}" role="dialog" aria-modal="true" style="background:var(--surface);border-radius:20px;padding:28px;max-width:420px;width:100%">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-family:'Playfair Display',serif;font-size:20px">Necklace length guide</div>
+          <button aria-label="Close" onClick="{{ pdp.closeSizeGuide }}" style="background:none;border:none;font-size:20px;cursor:pointer;min-height:44px;min-width:44px">×</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:15px;line-height:1.5">
+          <div>16" — sits at the choker line</div>
+          <div>18" — rests on the collarbone</div>
+          <div>20" — falls just below the collarbone</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  </sc-if>
+
+  <!-- CART -->
+  <sc-if value="{{ isCart }}" hint-placeholder-val="{{ false }}" data-screen-label="Cart">
+  <div style="max-width:1000px;margin:0 auto;padding:28px 20px 60px">
+    <h1 style="font-family:'Playfair Display',serif;font-size:clamp(28px,5vw,38px);margin:0 0 24px">Your bag</h1>
+    <sc-if value="{{ cartReconcileNote }}" hint-placeholder-val="{{ null }}"><div style="background:var(--gold-100);color:var(--forest-700);padding:12px 16px;border-radius:12px;margin-bottom:18px;font-size:14px">{{ cartReconcileNote }}</div></sc-if>
+    <sc-if value="{{ cartEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px;padding:40px 0">
+        <p style="margin:0;font-size:18px">Your bag is empty.</p>
+        <button onClick="{{ goShop }}" style="background:var(--gold-500);color:#fff;border:none;padding:12px 26px;border-radius:999px;cursor:pointer;min-height:44px">Browse the collection</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ cartHasItems }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:36px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <sc-for list="{{ cartLines }}" as="it" hint-placeholder-count="2">
+            <div style="display:grid;grid-template-columns:80px 1fr auto;gap:14px;align-items:center;padding-bottom:18px;border-bottom:1px solid rgba(46,43,37,0.12);opacity:{{ it.opacity }}">
+              <div style="border-radius:14px;overflow:hidden;aspect-ratio:1/1"><img src="{{ it.img }}" alt="{{ it.name }}" style="width:100%;height:100%;object-fit:cover"></div>
+              <div style="display:flex;flex-direction:column;gap:5px">
+                <div style="font-weight:600;font-size:15px">{{ it.name }}</div>
+                <div style="font-size:13px;color:rgba(46,43,37,0.6)">{{ it.selectionLabel }}</div>
+                <sc-if value="{{ it.unavailableMsg }}" hint-placeholder-val="{{ null }}"><div style="font-size:12.5px;color:var(--clay-500);font-weight:600">{{ it.unavailableMsg }}</div></sc-if>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+                  <div style="display:flex;align-items:center;border:1px solid rgba(46,43,37,0.2);border-radius:999px">
+                    <button aria-label="Decrease" onClick="{{ it.onDown }}" style="width:30px;height:30px;border:none;background:none;cursor:pointer">−</button>
+                    <span style="min-width:20px;text-align:center;font-size:13px">{{ it.qty }}</span>
+                    <button aria-label="Increase" disabled="{{ it.upDisabled }}" onClick="{{ it.onUp }}" style="width:30px;height:30px;border:none;background:none;cursor:pointer">+</button>
+                  </div>
+                  <span onClick="{{ it.onRemove }}" style="cursor:pointer;font-size:12.5px;color:rgba(46,43,37,0.6)">Remove</span>
+                </div>
+              </div>
+              <div style="font-weight:600;color:var(--gold-700);white-space:nowrap">{{ it.lineTotalLabel }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background:var(--surface);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:12px;position:sticky;top:90px">
+          <div style="font-family:'Playfair Display',serif;font-size:19px">Order summary</div>
+          <sc-if value="{{ freeDeliveryHint }}" hint-placeholder-val="{{ null }}"><div style="font-size:13px;color:var(--forest-700)">{{ freeDeliveryHint }}</div></sc-if>
+          <div style="display:flex;justify-content:space-between;font-size:14.5px"><span>Subtotal</span><span>{{ subtotalLabel }}</span></div>
+          <sc-if value="{{ discountApplied }}" hint-placeholder-val="{{ false }}"><div style="display:flex;justify-content:space-between;font-size:14.5px;color:var(--forest-700)"><span>Discount</span><span>−{{ discountLabel }}</span></div></sc-if>
+          <div style="display:flex;justify-content:space-between;font-size:14.5px"><span>Delivery</span><span>{{ deliveryLabel }}</span></div>
+          <div style="height:1px;background:rgba(46,43,37,0.12);margin:4px 0"></div>
+          <div style="display:flex;justify-content:space-between;font-size:19px;font-weight:600"><span>Total</span><span>{{ totalLabel }}</span></div>
+          <button disabled="{{ checkoutDisabled }}" onClick="{{ goCheckout }}" style="min-height:44px;background:var(--gold-500);color:#fff;border:none;border-radius:999px;font-family:'Jost',sans-serif;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;opacity:{{ checkoutOpacity }}">Checkout</button>
+          <a href="{{ whatsappCartUrl }}" target="_blank" style="text-align:center;border:1px solid var(--forest-500);color:var(--forest-700);padding:11px;border-radius:999px;font-family:'Jost',sans-serif;font-size:13px;min-height:44px;display:flex;align-items:center;justify-content:center">Order on WhatsApp</a>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <!-- CHECKOUT -->
+  <sc-if value="{{ isCheckout }}" hint-placeholder-val="{{ false }}" data-screen-label="Checkout">
+  <div style="max-width:1000px;margin:0 auto;padding:28px 20px 60px">
+    <h1 style="font-family:'Playfair Display',serif;font-size:clamp(26px,5vw,36px);margin:0 0 6px">Checkout</h1>
+    <div style="font-family:'Jost',sans-serif;font-size:12px;letter-spacing:0.06em;color:rgba(46,43,37,0.55);margin-bottom:26px">BAG · DELIVERY & PAYMENT · CONFIRMATION</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:36px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:26px">
+        <div style="background:var(--surface);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:14px">
+          <div style="font-family:'Playfair Display',serif;font-size:19px">Delivery details</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px">
+            <div><label style="font-size:13px">Full name</label><input value="{{ form.name }}" onChange="{{ form.onName }}" placeholder="Ayesha Khan" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid {{ errBorder.name }};margin-top:4px"><sc-if value="{{ errors.name }}" hint-placeholder-val="{{ null }}"><div style="color:var(--clay-500);font-size:12.5px;margin-top:4px">{{ errors.name }}</div></sc-if></div>
+            <div><label style="font-size:13px">Phone</label><input value="{{ form.phone }}" onChange="{{ form.onPhone }}" placeholder="03xx xxxxxxx" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid {{ errBorder.phone }};margin-top:4px"><sc-if value="{{ errors.phone }}" hint-placeholder-val="{{ null }}"><div style="color:var(--clay-500);font-size:12.5px;margin-top:4px">{{ errors.phone }}</div></sc-if></div>
+            <div><label style="font-size:13px">Email</label><input value="{{ form.email }}" onChange="{{ form.onEmail }}" placeholder="you@example.com" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid {{ errBorder.email }};margin-top:4px"><sc-if value="{{ errors.email }}" hint-placeholder-val="{{ null }}"><div style="color:var(--clay-500);font-size:12.5px;margin-top:4px">{{ errors.email }}</div></sc-if></div>
+          </div>
+          <div><label style="font-size:13px">Address</label><input value="{{ form.address }}" onChange="{{ form.onAddress }}" placeholder="House, street, area" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid {{ errBorder.address }};margin-top:4px"><sc-if value="{{ errors.address }}" hint-placeholder-val="{{ null }}"><div style="color:var(--clay-500);font-size:12.5px;margin-top:4px">{{ errors.address }}</div></sc-if></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px">
+            <div><label style="font-size:13px">City</label><input value="{{ form.city }}" onChange="{{ form.onCity }}" placeholder="Lahore" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid {{ errBorder.city }};margin-top:4px"><sc-if value="{{ errors.city }}" hint-placeholder-val="{{ null }}"><div style="color:var(--clay-500);font-size:12.5px;margin-top:4px">{{ errors.city }}</div></sc-if></div>
+            <div><label style="font-size:13px">Postal code</label><input value="{{ form.postal }}" onChange="{{ form.onPostal }}" placeholder="54000" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid rgba(46,43,37,0.2);margin-top:4px"></div>
+          </div>
+          <div><label style="font-size:13px">Order note (optional)</label><input value="{{ form.note }}" onChange="{{ form.onNote }}" placeholder="Gift wrap, delivery instructions…" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid rgba(46,43,37,0.2);margin-top:4px"></div>
+        </div>
+
+        <div style="background:var(--surface);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-family:'Playfair Display',serif;font-size:19px">Payment method</div>
+          <sc-for list="{{ payMethods }}" as="m" hint-placeholder-count="3">
+            <label style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid {{ m.border }};border-radius:14px;cursor:pointer;background:{{ m.bg }};min-height:44px">
+              <input type="radio" name="pay" checked="{{ m.checked }}" onChange="{{ m.onSelect }}">
+              <span style="font-weight:600;font-size:14.5px">{{ m.label }}</span>
+            </label>
+          </sc-for>
+          <sc-if value="{{ isCardPay }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;padding-top:6px">
+              <div><input value="{{ form.card }}" onChange="{{ form.onCard }}" placeholder="Card number" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid {{ errBorder.card }}"><sc-if value="{{ errors.card }}" hint-placeholder-val="{{ null }}"><div style="color:var(--clay-500);font-size:12.5px;margin-top:4px">{{ errors.card }}</div></sc-if></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div><input value="{{ form.expiry }}" onChange="{{ form.onExpiry }}" placeholder="MM/YY" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid {{ errBorder.expiry }}"><sc-if value="{{ errors.expiry }}" hint-placeholder-val="{{ null }}"><div style="color:var(--clay-500);font-size:12.5px;margin-top:4px">{{ errors.expiry }}</div></sc-if></div>
+                <div><input value="{{ form.cvc }}" onChange="{{ form.onCvc }}" placeholder="CVC" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid {{ errBorder.cvc }}"><sc-if value="{{ errors.cvc }}" hint-placeholder-val="{{ null }}"><div style="color:var(--clay-500);font-size:12.5px;margin-top:4px">{{ errors.cvc }}</div></sc-if></div>
+              </div>
+              <div style="font-size:12.5px;color:rgba(46,43,37,0.55)">This is a demo — card details are not sent anywhere and no charge is made.</div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:12px;position:sticky;top:90px">
+        <div style="font-family:'Playfair Display',serif;font-size:19px">Order summary</div>
+        <sc-for list="{{ cartLines }}" as="it" hint-placeholder-count="2">
+          <div style="display:flex;justify-content:space-between;gap:10px;font-size:13.5px"><span>{{ it.name }} × {{ it.qty }}</span><span>{{ it.lineTotalLabel }}</span></div>
+        </sc-for>
+        <div style="height:1px;background:rgba(46,43,37,0.12);margin:4px 0"></div>
+        <div style="display:flex;gap:8px">
+          <input value="{{ discountInput }}" onChange="{{ onDiscountInput }}" placeholder="Discount code" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(46,43,37,0.2)">
+          <button onClick="{{ applyDiscountCode }}" style="border:1px solid var(--gold-500);background:none;color:var(--gold-700);border-radius:10px;padding:0 14px;cursor:pointer">Apply</button>
+        </div>
+        <sc-if value="{{ discountError }}" hint-placeholder-val="{{ null }}"><div style="color:var(--clay-500);font-size:12.5px">{{ discountError }}</div></sc-if>
+        <div style="display:flex;justify-content:space-between;font-size:14.5px"><span>Subtotal</span><span>{{ subtotalLabel }}</span></div>
+        <sc-if value="{{ discountApplied }}" hint-placeholder-val="{{ false }}"><div style="display:flex;justify-content:space-between;font-size:14.5px;color:var(--forest-700)"><span>Discount</span><span>−{{ discountLabel }}</span></div></sc-if>
+        <div style="display:flex;justify-content:space-between;font-size:14.5px"><span>Delivery</span><span>{{ deliveryLabel }}</span></div>
+        <div style="height:1px;background:rgba(46,43,37,0.12);margin:4px 0"></div>
+        <div style="display:flex;justify-content:space-between;font-size:19px;font-weight:600"><span>Total</span><span>{{ totalLabel }}</span></div>
+        <button onClick="{{ onPlaceOrder }}" style="min-height:44px;background:var(--gold-500);color:#fff;border:none;border-radius:999px;font-family:'Jost',sans-serif;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer">Place order</button>
+        <a href="{{ whatsappCartUrl }}" target="_blank" style="text-align:center;border:1px solid var(--forest-500);color:var(--forest-700);padding:11px;border-radius:999px;font-family:'Jost',sans-serif;font-size:13px;min-height:44px;display:flex;align-items:center;justify-content:center">Order on WhatsApp instead</a>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- CONFIRM -->
+  <sc-if value="{{ isConfirm }}" hint-placeholder-val="{{ false }}" data-screen-label="Confirmation">
+  <div style="max-width:600px;margin:0 auto;padding:80px 24px 80px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px">
+    <div style="width:64px;height:64px;border-radius:999px;background:var(--forest-500);display:flex;align-items:center;justify-content:center">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M20 6 9 17l-5-5"></path></svg>
+    </div>
+    <div style="font-family:'Jost',sans-serif;font-size:12px;letter-spacing:0.1em;color:var(--gold-700)">ORDER {{ orderId }}</div>
+    <h1 style="font-family:'Playfair Display',serif;font-size:clamp(28px,5vw,36px);margin:0">Thank you, it's on its way</h1>
+    <p style="font-size:16px;color:rgba(46,43,37,0.75);margin:0">A confirmation email is on its way. Your piece will be packed by hand and delivered in a Mayra gift box.</p>
+    <div style="background:var(--surface);border-radius:16px;padding:20px;width:100%;text-align:left;display:flex;flex-direction:column;gap:8px">
+      <sc-for list="{{ orderLines }}" as="it" hint-placeholder-count="2"><div style="display:flex;justify-content:space-between;font-size:14px"><span>{{ it.name }} × {{ it.qty }}</span><span>{{ it.lineTotalLabel }}</span></div></sc-for>
+      <div style="height:1px;background:rgba(46,43,37,0.12);margin:4px 0"></div>
+      <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:600"><span>Total paid</span><span>{{ orderTotalLabel }}</span></div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+      <button onClick="{{ goLanding }}" style="background:var(--gold-500);color:#fff;border:none;padding:13px 26px;border-radius:999px;cursor:pointer;min-height:44px">Continue shopping</button>
+      <a href="{{ whatsappConfirmUrl }}" target="_blank" style="border:1px solid var(--forest-500);color:var(--forest-700);padding:12px 22px;border-radius:999px;min-height:44px;display:flex;align-items:center">Confirm via WhatsApp</a>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ABOUT -->
+  <sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}" data-screen-label="About">
+  <div style="max-width:760px;margin:0 auto;padding:36px 24px 60px;display:flex;flex-direction:column;gap:28px">
+    <h1 style="font-family:'Playfair Display',serif;font-size:clamp(28px,5vw,40px);margin:0">About Mayra</h1>
+    <div style="border-radius:20px;overflow:hidden;filter:saturate(0.8)"><img src="uploads/774401247_18084897383290966_2988688604153000306_n.jpg" alt="Mayra jewellery on silk" style="width:100%;display:block"></div>
+    <div style="font-size:17px;line-height:1.7">
+      <p>Mayra started as a small collection put together by someone who never found a piece that felt both delicate and durable enough to wear every day — most gold-tone jewellery is either too fragile to shower in or too heavy to layer. So we built the collection we couldn't find.</p>
+      <p>Everything here is 18k gold-plated stainless steel. That's a deliberate material choice, not a cost-cutting one: stainless steel doesn't tarnish or turn skin green the way brass or plain alloy does, and the plating holds up far longer than gold-plated brass — even with daily wear, sweat, and the occasional forgotten shower.</p>
+    </div>
+    <div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:22px;margin:0 0 10px">Care</h2>
+      <ul style="margin:0;padding-left:20px;font-size:16px;line-height:1.6">
+        <li>Remove before showering, swimming, or exercising</li>
+        <li>Keep away from perfume, lotion, and chlorine</li>
+        <li>Store dry, in the pouch it arrives in, away from direct sunlight</li>
+      </ul>
+    </div>
+    <div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:22px;margin:0 0 10px">Delivery</h2>
+      <p style="font-size:16px;line-height:1.6;margin:0">We deliver nationwide within Pakistan. Major cities: 2–4 working days. Other areas: 4–7 working days. Free delivery on orders over Rs 5,000 — otherwise a flat Rs 250 applies at checkout.</p>
+    </div>
+    <div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:22px;margin:0 0 10px">Returns & exchanges</h2>
+      <p style="font-size:16px;line-height:1.6;margin:0">Unworn pieces in original packaging can be exchanged within 7 days of delivery. Since earrings can't be resold for hygiene reasons, those are final sale unless faulty. Reach out on WhatsApp and we'll sort it out directly.</p>
+    </div>
+    <div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:22px;margin:0 0 10px">Get in touch</h2>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:16px">
+        <a href="{{ whatsappGeneralUrl }}" target="_blank">WhatsApp us</a>
+        <a href="mailto:hello@mayra.store">hello@mayra.store</a>
+        <a href="{{ instaFollowUrl }}" target="_blank">@mayra on Instagram</a>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- WISHLIST -->
+  <sc-if value="{{ isWishlist }}" hint-placeholder-val="{{ false }}" data-screen-label="Wishlist">
+  <div style="max-width:1180px;margin:0 auto;padding:28px 20px 60px">
+    <h1 style="font-family:'Playfair Display',serif;font-size:clamp(28px,5vw,38px);margin:0 0 24px">Saved</h1>
+    <sc-if value="{{ wishEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:40px 0"><p style="font-size:18px">Nothing saved yet. Tap the heart on a piece to keep it here.</p></div>
+    </sc-if>
+    <sc-if value="{{ wishHasItems }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:22px">
+        <sc-for list="{{ wishCards }}" as="c" hint-placeholder-count="3">
+          <div class="mrow" style="display:flex;flex-direction:column;gap:10px">
+            <div style="position:relative;border-radius:18px;overflow:hidden;aspect-ratio:1/1;background:var(--gold-100)">
+              <img class="mimg" onClick="{{ c.onOpen }}" src="{{ c.img }}" alt="{{ c.alt }}" style="width:100%;height:100%;object-fit:cover;cursor:pointer">
+              <sc-if value="{{ c.badgeText }}" hint-placeholder-val="{{ null }}"><span style="{{ c.badgeStyle }}">{{ c.badgeText }}</span></sc-if>
+            </div>
+            <div style="display:flex;justify-content:space-between;gap:8px;font-family:'Playfair Display',serif;font-size:16px"><span onClick="{{ c.onOpen }}" style="cursor:pointer">{{ c.name }}</span><span style="color:var(--gold-700)">{{ c.priceLabel }}</span></div>
+            <div style="display:flex;gap:8px">
+              <button onClick="{{ c.onAdd }}" style="flex:1;min-height:44px;border-radius:999px;border:1px solid var(--gold-500);background:transparent;color:var(--gold-700);font-family:'Jost',sans-serif;font-size:12px;cursor:pointer">{{ c.ctaLabel }}</button>
+              <button onClick="{{ c.onToggleWish }}" style="min-height:44px;padding:0 14px;border-radius:999px;border:1px solid rgba(46,43,37,0.2);background:none;cursor:pointer">Remove</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <!-- FOOTER -->
+  <div style="background:var(--forest-700);color:#e9e4d6;margin-top:40px">
+    <div style="max-width:1180px;margin:0 auto;padding:48px 20px 20px">
+      <div style="font-family:'Jost',sans-serif;font-size:13px;letter-spacing:0.12em;margin-bottom:16px">@MAYRA</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px;margin-bottom:16px">
+        <sc-for list="{{ instaTiles }}" as="t" hint-placeholder-count="6">
+          <a href="{{ instaFollowUrl }}" target="_blank" style="display:block;border-radius:12px;overflow:hidden;aspect-ratio:1/1"><img src="{{ t.img }}" alt="Mayra on Instagram" style="width:100%;height:100%;object-fit:cover"></a>
+        </sc-for>
+      </div>
+      <a href="{{ instaFollowUrl }}" target="_blank" style="display:inline-block;border:1px solid rgba(233,228,214,0.4);color:#e9e4d6;padding:8px 18px;border-radius:999px;font-family:'Jost',sans-serif;font-size:12px">Follow</a>
+    </div>
+    <div style="max-width:1180px;margin:0 auto;padding:24px 20px 32px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border-top:1px solid rgba(233,228,214,0.15);font-size:13px;color:rgba(233,228,214,0.7)">
+      <div style="font-family:'Playfair Display',serif;font-size:17px;letter-spacing:0.1em;color:#e9e4d6">MAYRA</div>
+      <div>© 2026 Mayra · Jewels that speak for you.</div>
+    </div>
+  </div>
+
+  <!-- MOBILE TAB BAR -->
+  <sc-if value="{{ showMobileTabs }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:0;left:0;right:0;z-index:35;background:var(--surface);border-top:1px solid rgba(46,43,37,0.12);display:flex;padding:6px 0 max(6px,env(safe-area-inset-bottom))">
+      <button onClick="{{ goShop }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;padding:8px 0;min-height:44px;color:{{ tabShopColor }}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"></path></svg>
+        <span style="font-family:'Jost',sans-serif;font-size:10px">Shop</span>
+      </button>
+      <button onClick="{{ goWishlist }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;padding:8px 0;min-height:44px;color:{{ tabWishColor }}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
+        <span style="font-family:'Jost',sans-serif;font-size:10px">Saved</span>
+      </button>
+      <button onClick="{{ goCart }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;padding:8px 0;min-height:44px;color:{{ tabCartColor }}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+        <span style="font-family:'Jost',sans-serif;font-size:10px">Bag</span>
+      </button>
+    </div>
+  </sc-if>
+
+  <!-- STICKY ADD TO BAG -->
+  <sc-if value="{{ stickyVisible }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:0;right:0;bottom:{{ stickyBottom }}px;z-index:34;background:var(--surface);border-top:1px solid rgba(46,43,37,0.15);padding:10px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 -4px 16px rgba(46,43,37,0.08)">
+      <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ stickyName }}</div><div style="font-size:13px;color:var(--gold-700)">{{ stickyPrice }}</div></div>
+      <button disabled="{{ stickyCtaDisabled }}" onClick="{{ stickyOnCta }}" style="min-height:44px;background:var(--gold-500);color:#fff;border:none;border-radius:999px;padding:0 22px;font-family:'Jost',sans-serif;font-size:13px;cursor:pointer">{{ stickyCtaLabel }}</button>
+    </div>
+  </sc-if>
+
+  <!-- PROMO POPUP -->
+  <sc-if value="{{ popupOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closePopup }}" role="dialog" aria-modal="true" style="position:fixed;inset:0;background:rgba(46,43,37,0.6);z-index:70;display:flex;align-items:center;justify-content:center;padding:16px">
+      <div onClick="{{ stopClick }}" style="{{ popupBoxStyle }}">
+        <button aria-label="Close" onClick="{{ closePopup }}" style="position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:999px;border:none;background:rgba(255,255,255,0.85);font-size:20px;cursor:pointer;z-index:2">×</button>
+        <img src="uploads/774469274_18085058990290966_8868225255377246489_n.jpg" alt="Mayra launch offer — 20% off with code MAYRA20" style="width:100%;display:block;border-radius:18px 18px 0 0">
+        <div style="padding:18px;text-align:center;background:var(--surface);border-radius:0 0 18px 18px">
+          <button onClick="{{ popupShopOffer }}" style="min-height:44px;background:var(--gold-500);color:#fff;border:none;padding:13px 28px;border-radius:999px;font-family:'Jost',sans-serif;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">Shop with 20% off</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- VARIANT SHEET -->
+  <sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeSheet }}" role="dialog" aria-modal="true" style="position:fixed;inset:0;background:rgba(46,43,37,0.55);z-index:65;display:flex;align-items:{{ sheetAlign }};justify-content:center;padding:0">
+      <div onClick="{{ stopClick }}" style="{{ sheetBoxStyle }}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="font-family:'Playfair Display',serif;font-size:19px">{{ sheet.name }}</div>
+          <button aria-label="Close" onClick="{{ closeSheet }}" style="background:none;border:none;font-size:20px;cursor:pointer;min-height:44px;min-width:44px">×</button>
+        </div>
+        <div style="display:flex;gap:14px;margin-bottom:16px">
+          <div style="width:72px;height:72px;border-radius:12px;overflow:hidden;flex-shrink:0"><img src="{{ sheet.img }}" alt="{{ sheet.name }}" style="width:100%;height:100%;object-fit:cover"></div>
+          <div><div style="font-size:17px;color:var(--gold-700);font-weight:600">{{ sheet.priceLabel }}</div><div style="font-size:13px;color:rgba(46,43,37,0.6)">{{ sheet.stockLine }}</div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;max-height:44vh;overflow-y:auto">
+          <sc-for list="{{ sheet.optionRows }}" as="row" hint-placeholder-count="2">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-family:'Jost',sans-serif;font-size:11.5px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(46,43,37,0.6)">{{ row.label }}</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <sc-for list="{{ row.values }}" as="val" hint-placeholder-count="3">
+                  <button title="{{ val.tooltip }}" aria-label="{{ val.label }}" aria-disabled="{{ val.ariaDisabled }}" disabled="{{ val.disabled }}" onClick="{{ val.onClick }}" style="{{ val.style }}">{{ val.text }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ sheet.note }}" hint-placeholder-val="{{ null }}"><div style="font-size:13px;color:var(--forest-700);background:var(--gold-100);padding:9px 12px;border-radius:10px;margin-top:12px">{{ sheet.note }}</div></sc-if>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:16px">
+          <div style="display:flex;align-items:center;border:1px solid rgba(46,43,37,0.2);border-radius:999px">
+            <button aria-label="Decrease" disabled="{{ sheet.qtyDownDisabled }}" onClick="{{ sheet.qtyDown }}" style="width:36px;height:36px;border:none;background:none;font-size:16px;cursor:pointer">−</button>
+            <span style="min-width:26px;text-align:center">{{ sheet.qty }}</span>
+            <button aria-label="Increase" disabled="{{ sheet.qtyUpDisabled }}" onClick="{{ sheet.qtyUp }}" style="width:36px;height:36px;border:none;background:none;font-size:16px;cursor:pointer">+</button>
+          </div>
+        </div>
+        <button disabled="{{ sheet.confirmDisabled }}" onClick="{{ confirmSheet }}" style="width:100%;min-height:46px;margin-top:16px;background:var(--gold-500);color:#fff;border:none;border-radius:999px;font-family:'Jost',sans-serif;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;opacity:{{ sheet.confirmOpacity }}">Add to bag</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- TOAST -->
+  <div aria-live="polite" style="position:fixed;left:50%;bottom:{{ toastBottom }}px;transform:translateX(-50%);z-index:80;pointer-events:{{ toastPointer }}">
+    <sc-if value="{{ toastVisible }}" hint-placeholder-val="{{ false }}">
+      <div style="background:var(--forest-700);color:#fff;padding:12px 18px;border-radius:999px;display:flex;align-items:center;gap:12px;font-size:14px;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.2)">
+        <span>{{ toastMessage }}</span>
+        <sc-if value="{{ toastLinkLabel }}" hint-placeholder-val="{{ null }}"><span onClick="{{ toastOnLink }}" style="text-decoration:underline;cursor:pointer;color:var(--gold-300)">{{ toastLinkLabel }}</span></sc-if>
+      </div>
+    </sc-if>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const LOW_STOCK_AT = 3;
+const WHATSAPP_NUMBER = '923001234567'; // placeholder — replace with the real business WhatsApp number
+const fmt = n => 'Rs ' + n.toLocaleString('en-PK');
+const img = (id, w) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=80`;
+const CARE_DEFAULT = ['Remove before showering or swimming', 'Keep away from perfume and lotion', 'Store dry, in the pouch it arrives in'];
+
+const U = {
+  heart1:'photo-1623321673989-830eff0fd59f', chainFine:'photo-1611107683227-e9060eccd846',
+  pendant:'photo-1569397288884-4d43d6738fbd', celestial:'photo-1685970731194-e27b477e87ba',
+  layered:'photo-1620656798579-1984d9e87df7', twoTone:'photo-1601121141461-920cb1993441',
+  studioBust:'photo-1722410180687-b05b50922362', flat1:'photo-1722410180644-5955f83ec8b1',
+  stack:'photo-1611591437281-460bfbe1220a', rope:'photo-1602173574767-37ac01994b2a',
+  everyday:'photo-1633810543462-77c4a3b13f07', charm:'photo-1721206624492-3d05631471ea',
+  braceletPair:'photo-1679156271456-d6068c543ee7', leaf:'photo-1689367436629-1d288f1e23b6',
+  slimBand:'photo-1655707063513-a08dad26440e', stackingRing:'photo-1689367436442-76c859315008',
+  studs:'photo-1722410180681-9f5a22d7ebb6', drop:'photo-1722410180670-b6d5a2e704fa'
+};
+
+const CATEGORIES = [
+  { id: 'necklaces', label: 'Necklaces' },
+  { id: 'bracelets', label: 'Bracelets' },
+  { id: 'rings', label: 'Rings' },
+  { id: 'earrings', label: 'Earrings' }
+];
+
+const PRODUCTS = [
+  { id:'p-heart-charm', name:'Heart Charm Necklace', category:'necklaces', collection:null, basePrice:2400,
+    material:'18k gold-plated stainless steel',
+    blurb:'A soft heart charm on a fine cable chain — simple, wearable, and easy to layer with anything else in the case.',
+    care: CARE_DEFAULT, images:{ default:[U.heart1,U.chainFine], rose:[U.flat1], steel:[U.twoTone] },
+    options:[
+      { key:'colour', label:'Colour', type:'swatch', values:[ {id:'gold',label:'Gold',hex:'#c8a24a'}, {id:'rose',label:'Rose gold',hex:'#d9a08c'}, {id:'steel',label:'Silver',hex:'#c8ccd0'} ] },
+      { key:'length', label:'Length', type:'segment', values:[ {id:'16',label:'16"'}, {id:'18',label:'18"'}, {id:'20',label:'20"',priceDelta:200} ] }
+    ],
+    variants:{ 'gold|16':{sku:'MYR-HC-G16',stock:12}, 'gold|18':{sku:'MYR-HC-G18',stock:4}, 'gold|20':{sku:'MYR-HC-G20',stock:0}, 'rose|18':{sku:'MYR-HC-R18',stock:2}, 'steel|16':{sku:'MYR-HC-S16',stock:0}, 'steel|18':{sku:'MYR-HC-S18',stock:7} } },
+
+  { id:'p-fine-chain', name:'Fine Chain Necklace', category:'necklaces', collection:null, basePrice:1900,
+    material:'18k gold-plated stainless steel', blurb:'A fine box chain that sits close to the neck — the everyday base layer for any stack.',
+    care: CARE_DEFAULT, images:{ default:[U.chainFine,U.pendant] },
+    options:[
+      { key:'colour', label:'Colour', type:'swatch', values:[ {id:'gold',label:'Gold',hex:'#c8a24a'}, {id:'steel',label:'Silver',hex:'#c8ccd0'} ] },
+      { key:'length', label:'Length', type:'segment', values:[ {id:'16',label:'16"'}, {id:'18',label:'18"'} ] }
+    ],
+    variants:{ 'gold|16':{sku:'MYR-FC-G16',stock:5}, 'gold|18':{sku:'MYR-FC-G18',stock:0}, 'steel|16':{sku:'MYR-FC-S16',stock:3} } },
+
+  { id:'p-pendant', name:'Pendant Necklace', category:'necklaces', collection:null, basePrice:2100,
+    material:'18k gold-plated stainless steel', blurb:'A gold-tone pendant on a delicate chain — quietly detailed, easy to wear alone.',
+    care: CARE_DEFAULT, images:{ default:[U.pendant,U.celestial] },
+    options:[ { key:'length', label:'Length', type:'segment', values:[ {id:'18',label:'18"'}, {id:'20',label:'20"',priceDelta:150} ] } ],
+    variants:{ '18':{sku:'MYR-PD-18',stock:10}, '20':{sku:'MYR-PD-20',stock:0} } },
+
+  { id:'p-celestial', name:'Celestial Pendant Necklace', category:'necklaces', collection:null, basePrice:2800,
+    material:'18k gold-plated stainless steel', blurb:'A celestial-motif pendant with a little more presence — a solo statement piece.',
+    care: CARE_DEFAULT, images:{ default:[U.celestial], rose:[U.layered] },
+    options:[
+      { key:'colour', label:'Colour', type:'swatch', values:[ {id:'gold',label:'Gold',hex:'#c8a24a'}, {id:'rose',label:'Rose gold',hex:'#d9a08c'} ] },
+      { key:'length', label:'Length', type:'segment', values:[ {id:'16',label:'16"'}, {id:'18',label:'18"'}, {id:'20',label:'20"',priceDelta:200} ] }
+    ],
+    variants:{ 'gold|16':{sku:'MYR-CE-G16',stock:8}, 'gold|18':{sku:'MYR-CE-G18',stock:5}, 'gold|20':{sku:'MYR-CE-G20',stock:2}, 'rose|20':{sku:'MYR-CE-R20',stock:1} } },
+
+  { id:'p-layered-set', name:'Layered Necklace Set', category:'necklaces', collection:null, basePrice:3400,
+    material:'18k gold-plated stainless steel', blurb:'Two chains, pre-layered at the perfect drop, so you never have to untangle them.',
+    care: CARE_DEFAULT, images:{ default:[U.layered,U.studioBust] }, options:[],
+    variants:{ 'default':{sku:'MYR-LS-01',stock:6} } },
+
+  { id:'p-two-tone', name:'Two-tone Necklace', category:'necklaces', collection:null, basePrice:2600,
+    material:'18k gold-plated stainless steel', blurb:'Gold and silver-tone chains worn together — a two-tone piece that pairs with either metal in your stack.',
+    care: CARE_DEFAULT, images:{ default:[U.twoTone,U.flat1] },
+    options:[
+      { key:'colour', label:'Colour', type:'swatch', values:[ {id:'gold',label:'Gold',hex:'#c8a24a'}, {id:'silver',label:'Silver',hex:'#c8ccd0'}, {id:'roseg',label:'Rose gold',hex:'#d9a08c'} ] },
+      { key:'length', label:'Length', type:'segment', values:[ {id:'18',label:'18"'} ] }
+    ],
+    variants:{ 'gold|18':{sku:'MYR-TT-G18',stock:4}, 'silver|18':{sku:'MYR-TT-S18',stock:0} } },
+
+  { id:'p-golden-essence-stack', name:'Golden Essence Stack', category:'bracelets', collection:'golden-essence', basePrice:4500,
+    material:'18k gold-plated stainless steel', blurb:'Six chains layered to perfection — curb, box, rope, figaro, herringbone and paperclip in one stack.',
+    care: CARE_DEFAULT, images:{ default:[U.stack,U.rope] },
+    options:[
+      { key:'colour', label:'Colour', type:'swatch', values:[ {id:'gold',label:'Gold',hex:'#c8a24a'} ] },
+      { key:'size', label:'Wrist size', type:'segment', values:[ {id:'S',label:'S'}, {id:'M',label:'M'}, {id:'L',label:'L'} ] }
+    ],
+    variants:{ 'gold|S':{sku:'MYR-GE-S',stock:10}, 'gold|M':{sku:'MYR-GE-M',stock:6}, 'gold|L':{sku:'MYR-GE-L',stock:0} } },
+
+  { id:'p-rope-chain', name:'Rope Chain Bracelet', category:'bracelets', collection:'golden-essence', basePrice:1800,
+    material:'18k gold-plated stainless steel', blurb:'A dense rope-weave chain with real weight on the wrist — a stack piece that can also stand alone.',
+    care: CARE_DEFAULT, images:{ default:[U.rope,U.stack] },
+    options:[
+      { key:'colour', label:'Colour', type:'swatch', values:[ {id:'gold',label:'Gold',hex:'#c8a24a'}, {id:'rose',label:'Rose gold',hex:'#d9a08c'} ] },
+      { key:'size', label:'Wrist size', type:'segment', values:[ {id:'S',label:'S'}, {id:'M',label:'M'}, {id:'L',label:'L'} ] }
+    ],
+    variants:{ 'gold|S':{sku:'MYR-RC-GS',stock:5}, 'gold|M':{sku:'MYR-RC-GM',stock:3}, 'gold|L':{sku:'MYR-RC-GL',stock:8}, 'rose|M':{sku:'MYR-RC-RM',stock:2} } },
+
+  { id:'p-everyday-bracelet', name:'Everyday Bracelet', category:'bracelets', collection:'golden-essence', basePrice:1600,
+    material:'18k gold-plated stainless steel', blurb:'A close-fitting curb chain sized to wear every day without a clasp.',
+    care: CARE_DEFAULT, images:{ default:[U.everyday] }, options:[],
+    variants:{ 'default':{sku:'MYR-EB-01',stock:9} } },
+
+  { id:'p-charm-bracelet', name:'Charm Bracelet', category:'bracelets', collection:null, basePrice:2000,
+    material:'18k gold-plated stainless steel', blurb:'A single charm on a fine curb chain — the next piece in this run, back soon.',
+    care: CARE_DEFAULT, images:{ default:[U.charm,U.braceletPair] },
+    options:[
+      { key:'colour', label:'Colour', type:'swatch', values:[ {id:'gold',label:'Gold',hex:'#c8a24a'} ] },
+      { key:'size', label:'Wrist size', type:'segment', values:[ {id:'S',label:'S'}, {id:'M',label:'M'} ] }
+    ],
+    variants:{ 'gold|S':{sku:'MYR-CB-S',stock:0}, 'gold|M':{sku:'MYR-CB-M',stock:0} } },
+
+  { id:'p-leaf-ring', name:'Leaf Ring', category:'rings', collection:null, basePrice:1500,
+    material:'18k gold-plated stainless steel', blurb:'An open leaf band that sits low on the finger — adjustable-feeling, easy to stack.',
+    care: CARE_DEFAULT, images:{ default:[U.leaf,U.stackingRing], silver:[U.slimBand] },
+    options:[
+      { key:'colour', label:'Colour', type:'swatch', values:[ {id:'gold',label:'Gold',hex:'#c8a24a'}, {id:'silver',label:'Silver',hex:'#c8ccd0'} ] },
+      { key:'size', label:'Ring size', type:'segment', values:[ {id:'6',label:'6'}, {id:'7',label:'7'}, {id:'8',label:'8'} ] }
+    ],
+    variants:{ 'gold|6':{sku:'MYR-LR-G6',stock:4}, 'gold|7':{sku:'MYR-LR-G7',stock:1}, 'gold|8':{sku:'MYR-LR-G8',stock:0}, 'silver|7':{sku:'MYR-LR-S7',stock:0} } },
+
+  { id:'p-solitaire-studs', name:'Solitaire Studs', category:'earrings', collection:null, basePrice:1900,
+    material:'18k gold-plated stainless steel', blurb:'A round-cut solitaire stud — the everyday earring that goes with everything else here.',
+    care: CARE_DEFAULT, images:{ default:[U.studs,U.drop] },
+    options:[ { key:'colour', label:'Colour', type:'swatch', values:[ {id:'gold',label:'Gold',hex:'#c8a24a'}, {id:'rose',label:'Rose gold',hex:'#d9a08c'}, {id:'steel',label:'Silver',hex:'#c8ccd0'} ] } ],
+    variants:{ 'gold':{sku:'MYR-SS-G',stock:7}, 'rose':{sku:'MYR-SS-R',stock:2}, 'steel':{sku:'MYR-SS-S',stock:0} } }
+];
+
+function coverImage(p, colourId, w) { const set = (colourId && p.images[colourId] && p.images[colourId].length) ? p.images[colourId] : p.images.default; return img(set[0], w || 500); }
+function galleryImages(p, colourId, w) { const set = (colourId && p.images[colourId] && p.images[colourId].length) ? p.images[colourId] : p.images.default; return set.map(id => img(id, w || 1000)); }
+function variantKey(p, sel) { return p.options.length ? p.options.map(o => sel[o.key]).join('|') : 'default'; }
+function getVariant(p, sel) { return p.variants[variantKey(p, sel)]; }
+function optionValue(opt, id) { return opt.values.find(v => v.id === id); }
+function variantPrice(p, sel) { let price = p.basePrice; p.options.forEach(o => { const v = optionValue(o, sel[o.key]); if (v && v.priceDelta) price += v.priceDelta; }); return price; }
+function isAvailable(p, sel) { const v = getVariant(p, sel); return !!v && v.stock > 0; }
+function valueState(p, sel, optKey, valueId) { const testSel = { ...sel, [optKey]: valueId }; const v = p.variants[variantKey(p, testSel)]; if (!v) return 'nonexistent'; if (v.stock <= 0) return 'soldout'; return 'available'; }
+function optionValueHasAnyStock(p, optKey, valueId) { const idx = p.options.findIndex(o => o.key === optKey); return Object.keys(p.variants).some(key => { const parts = key.split('|'); return parts[idx] === valueId && p.variants[key].stock > 0; }); }
+function optionValueExistsAtAll(p, optKey, valueId) { const idx = p.options.findIndex(o => o.key === optKey); return Object.keys(p.variants).some(key => { const parts = key.split('|'); return parts[idx] === valueId; }); }
+function firstAvailable(p) { const keys = Object.keys(p.variants); for (const key of keys) { if (p.variants[key].stock > 0) { if (!p.options.length) return {}; const parts = key.split('|'); const sel = {}; p.options.forEach((o, i) => { sel[o.key] = parts[i]; }); return sel; } } return null; }
+function productStock(p) { return Object.values(p.variants).reduce((s, v) => s + v.stock, 0); }
+function isSoldOut(p) { return productStock(p) === 0; }
+function isSingleCombination(p) { return Object.keys(p.variants).length === 1; }
+function cartKeyFor(p, sel) { return p.id + '|' + variantKey(p, sel); }
+function selectionLabel(p, sel) { return p.options.map(o => { const v = optionValue(o, sel[o.key]); return v ? v.label : null; }).filter(Boolean).join(' \u00b7 '); }
+async function loadProducts() { return PRODUCTS; }
+async function submitOrder() { return { ok: true, orderId: '#MYR' + Math.floor(10000 + Math.random() * 89999) }; }
+
+function swatchStyle(v) {
+  const border = v.selected ? '3px solid #97741f' : '2px solid rgba(46,43,37,0.18)';
+  const opacity = v.disabled ? 0.38 : 1;
+  const hatch = v.hatched ? 'background-image:repeating-linear-gradient(45deg, rgba(46,43,37,0.4) 0 2px, transparent 2px 6px);' : '';
+  return `width:38px;height:38px;min-width:44px;min-height:44px;border-radius:999px;background:${v.hex||'#ccc'};border:${border};opacity:${opacity};cursor:${v.disabled?'not-allowed':'pointer'};position:relative;padding:0;${hatch}${v.struck?'box-shadow:inset 0 0 0 100px rgba(46,43,37,0.0);':''}`;
+}
+function segStyle(v) {
+  const selected = v.selected;
+  const hatch = v.hatched ? 'background-image:repeating-linear-gradient(45deg, rgba(46,43,37,0.12) 0 3px, transparent 3px 8px);' : '';
+  return `padding:10px 16px;min-height:44px;border-radius:999px;border:${selected?'2px solid #97741f':'1px solid rgba(46,43,37,0.25)'};background:${selected?'#faf1de':'#fff'};opacity:${v.disabled?0.4:1};cursor:${v.disabled?'not-allowed':'pointer'};font-family:'Jost',sans-serif;font-size:13px;letter-spacing:0.03em;text-decoration:${v.struck?'line-through':'none'};${hatch}`;
+}
+
+class Component extends DCLogic {
+  state = {
+    route: 'landing', products: PRODUCTS, isMobile: (typeof window !== 'undefined' && window.innerWidth < 768), reducedMotion: false, scrolledPastHero: false,
+    popupOpen: false, announcementVisible: false, pendingDiscountCode: null,
+    searchOpen: false, searchQuery: '', filterCategory: 'all', inStockOnly: false, sortBy: 'featured',
+    wishlist: [], cart: {},
+    pdpProductId: null, pdpSelection: {}, pdpQty: 1, pdpNote: null, pdpGalleryIndex: 0, careOpen: false, sizeGuideOpen: false, notifyEmail: '',
+    sheet: null, toast: null, cartReconcileNote: null,
+    checkoutForm: { name:'', phone:'', email:'', address:'', city:'', postal:'', note:'', payMethod:'cod', card:'', expiry:'', cvc:'' },
+    checkoutErrors: {}, discountInput: '', discountApplied: false, discountError: null, orderResult: null
+  };
+
+  componentDidMount() {
+    loadProducts().then(products => this.setState({ products }));
+    this.enterLanding();
+    window.addEventListener('resize', this.onResize);
+    window.addEventListener('keydown', this.onKeyDown);
+    window.addEventListener('scroll', this.onScroll);
+    try { this.setState({ reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches }); } catch (e) {}
+  }
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.onResize);
+    window.removeEventListener('keydown', this.onKeyDown);
+    window.removeEventListener('scroll', this.onScroll);
+    if (this._popupTimer) clearTimeout(this._popupTimer);
+    if (this._toastTimer) clearTimeout(this._toastTimer);
+  }
+  onResize = () => this.setState({ isMobile: window.innerWidth < 768 });
+  onScroll = () => this.setState({ scrolledPastHero: window.scrollY > 460 });
+  onKeyDown = (e) => {
+    if (e.key !== 'Escape') return;
+    if (this.state.popupOpen) return this.closePopup();
+    if (this.state.sheet) return this.closeSheet();
+    if (this.state.sizeGuideOpen) return this.setState({ sizeGuideOpen: false });
+    if (this.state.searchOpen) return this.setState({ searchOpen: false });
+  };
+  stopClick = (e) => e.stopPropagation();
+
+  enterLanding() { if (this._popupTimer) clearTimeout(this._popupTimer); this._popupTimer = setTimeout(() => this.setState({ popupOpen: true }), 600); }
+
+  go(route, opts) {
+    opts = opts || {};
+    if (route === 'cart') this.reconcileCartStock(); else this.setState({ cartReconcileNote: null });
+    this.setState(s => ({ route, filterCategory: opts.category || (route === 'shop' ? s.filterCategory : 'all') }));
+    window.scrollTo(0, 0);
+    if (route === 'landing') this.enterLanding();
+  }
+  goLanding = () => this.go('landing');
+  goShop = () => this.go('shop');
+  goCollection = () => this.go('collection');
+  goAbout = () => this.go('about');
+  goCart = () => this.go('cart');
+  goCheckout = () => this.go('checkout');
+  goWishlist = () => this.go('wishlist');
+
+  openProduct(id) {
+    const p = this.state.products.find(x => x.id === id);
+    if (!p) { this.go('shop'); this.pushToast('That piece isn\u2019t available anymore.'); return; }
+    const sel = firstAvailable(p) || {};
+    this.setState({ route: 'product', pdpProductId: id, pdpSelection: sel, pdpQty: 1, pdpNote: null, pdpGalleryIndex: 0, careOpen: false, notifyEmail: '' });
+    window.scrollTo(0, 0);
+  }
+
+  pushToast(message, linkLabel, onLink) {
+    if (this._toastTimer) clearTimeout(this._toastTimer);
+    this.setState({ toast: { message, linkLabel: linkLabel || null, onLink: onLink || null } });
+    this._toastTimer = setTimeout(() => this.setState({ toast: null }), 2800);
+  }
+
+  closePopup() { this.setState({ popupOpen: false, announcementVisible: true }); }
+  popupShopOffer() { this.setState({ popupOpen: false, announcementVisible: true, pendingDiscountCode: 'MAYRA20', discountInput: 'MAYRA20' }); this.go('shop'); }
+  reopenPopup() { this.setState({ popupOpen: true }); }
+  dismissAnnouncement() { this.setState({ announcementVisible: false }); }
+  announceShopNow() { this.setState({ discountInput: 'MAYRA20', pendingDiscountCode: 'MAYRA20' }); this.go('shop'); }
+
+  toggleSearch = () => this.setState(s => ({ searchOpen: !s.searchOpen }));
+  onSearchInput = (e) => this.setState({ searchQuery: e.target.value });
+
+  applySelection(where, product, optKey, valueId) {
+    const cur = where === 'pdp' ? this.state.pdpSelection : this.state.sheet.selection;
+    let next = { ...cur, [optKey]: valueId };
+    let note = null;
+    if (!isAvailable(product, next)) {
+      const otherOpts = product.options.filter(o => o.key !== optKey);
+      outer:
+      for (const oo of otherOpts) {
+        for (const val of oo.values) {
+          const testSel = { ...next, [oo.key]: val.id };
+          if (isAvailable(product, testSel)) {
+            const chosenLabel = optionValue(product.options.find(o => o.key === optKey), valueId).label;
+            const oldLabel = optionValue(oo, cur[oo.key]) ? optionValue(oo, cur[oo.key]).label : val.label;
+            note = `${oldLabel} isn't available in ${chosenLabel} \u2014 switched to ${val.label}.`;
+            next = testSel;
+            break outer;
+          }
+        }
+      }
+    }
+    if (where === 'pdp') this.setState({ pdpSelection: next, pdpNote: note, pdpQty: 1, pdpGalleryIndex: 0 });
+    else this.setState(s => ({ sheet: { ...s.sheet, selection: next, note, qty: 1 } }));
+  }
+  changeQty(where, delta, cap) {
+    if (where === 'pdp') this.setState(s => ({ pdpQty: Math.max(1, Math.min(Math.max(cap,1), s.pdpQty + delta)) }));
+    else this.setState(s => ({ sheet: { ...s.sheet, qty: Math.max(1, Math.min(Math.max(cap,1), s.sheet.qty + delta)) } }));
+  }
+
+  addToCart(product, selection, qty, opts) {
+    opts = opts || {};
+    const key = cartKeyFor(product, selection);
+    this.setState(s => { const cart = { ...s.cart }; const existing = cart[key]; cart[key] = { productId: product.id, selection, qty: (existing ? existing.qty : 0) + qty }; return { cart }; });
+    if (!opts.silent) { const lbl = selectionLabel(product, selection); this.pushToast(`Added \u00b7 ${product.name}${lbl ? ', ' + lbl : ''}`, 'View bag', () => this.go('cart')); }
+  }
+  handleCardAdd(product) {
+    if (isSoldOut(product)) { this.openProduct(product.id); return; }
+    if (isSingleCombination(product)) { this.addToCart(product, firstAvailable(product) || {}, 1); }
+    else { this.setState({ sheet: { productId: product.id, selection: firstAvailable(product) || {}, qty: 1, note: null } }); }
+  }
+  closeSheet() { this.setState({ sheet: null }); }
+  confirmSheet() {
+    const s = this.state.sheet; const p = this.state.products.find(x => x.id === s.productId);
+    if (!p || !isAvailable(p, s.selection)) return;
+    this.addToCart(p, s.selection, s.qty);
+    this.closeSheet();
+  }
+  shopFullStack() {
+    const items = this.state.products.filter(p => p.collection === 'golden-essence' && !isSoldOut(p));
+    items.forEach(p => this.addToCart(p, firstAvailable(p), 1, { silent: true }));
+    this.pushToast('Added the full stack to your bag', 'View bag', () => this.go('cart'));
+  }
+
+  changeCartQty(key, delta) {
+    this.setState(s => {
+      const cart = { ...s.cart }; const item = cart[key]; if (!item) return {};
+      const p = s.products.find(x => x.id === item.productId); const v = getVariant(p, item.selection); const cap = v ? v.stock : 0;
+      const nextQty = Math.max(0, Math.min(cap, item.qty + delta));
+      if (nextQty <= 0) delete cart[key]; else cart[key] = { ...item, qty: nextQty };
+      return { cart };
+    });
+  }
+  removeCartItem(key) { this.setState(s => { const cart = { ...s.cart }; delete cart[key]; return { cart }; }); }
+  reconcileCartStock() {
+    this.setState(s => {
+      const cart = { ...s.cart }; const notes = []; let changed = false;
+      Object.keys(cart).forEach(key => {
+        const item = cart[key]; const p = s.products.find(x => x.id === item.productId); if (!p) return;
+        const v = getVariant(p, item.selection); const cap = v ? v.stock : 0;
+        if (cap > 0 && item.qty > cap) { notes.push(`Only ${cap} left \u2014 quantity reduced from ${item.qty} for ${p.name}.`); cart[key] = { ...item, qty: cap }; changed = true; }
+      });
+      return changed ? { cart, cartReconcileNote: notes.join(' ') } : {};
+    });
+  }
+  toggleWish(id) { this.setState(s => { const has = s.wishlist.includes(id); return { wishlist: has ? s.wishlist.filter(x => x !== id) : [...s.wishlist, id] }; }); }
+
+  setCheckoutField(field, val) { this.setState(s => ({ checkoutForm: { ...s.checkoutForm, [field]: val }, checkoutErrors: { ...s.checkoutErrors, [field]: null } })); }
+  applyDiscountCode = () => {
+    const code = this.state.discountInput.trim().toUpperCase();
+    if (!code) return;
+    if (code === 'MAYRA20') this.setState({ discountApplied: true, discountError: null });
+    else this.setState({ discountApplied: false, discountError: "That code isn't valid" });
+  }
+  validateCheckout(cf) {
+    const errs = {};
+    if (!cf.name.trim()) errs.name = 'Enter the name we should deliver to';
+    if (!/^\d{7,}$/.test(cf.phone.replace(/\D/g, ''))) errs.phone = 'Enter a phone number we can reach you on';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cf.email.trim())) errs.email = 'Enter an email we can send your confirmation to';
+    if (!cf.address.trim()) errs.address = 'Enter your delivery address';
+    if (!cf.city.trim()) errs.city = 'Enter your city';
+    if (cf.payMethod === 'card') {
+      if (!/^\d{12,19}$/.test(cf.card.replace(/\s/g, ''))) errs.card = 'Enter a valid card number';
+      if (!/^\d{2}\/\d{2}$/.test(cf.expiry)) errs.expiry = 'Use MM/YY';
+      if (!/^\d{3,4}$/.test(cf.cvc)) errs.cvc = 'Enter the 3-digit code on the back';
+    }
+    return errs;
+  }
+  computeTotals() {
+    const lines = this.buildCartLines();
+    const subtotalRaw = lines.reduce((s, l) => s + (l.available ? l.lineTotalRaw : 0), 0);
+    const hasUnavailable = lines.some(l => !l.available);
+    const discountRaw = this.state.discountApplied ? Math.round(subtotalRaw * 0.2) : 0;
+    const deliveryRaw = subtotalRaw > 0 && (subtotalRaw - discountRaw) < 5000 ? 250 : 0;
+    const totalRaw = subtotalRaw - discountRaw + deliveryRaw;
+    const remaining = Math.max(0, 5000 - (subtotalRaw - discountRaw));
+    return { lines, subtotalRaw, subtotalLabel: fmt(subtotalRaw), discountLabel: fmt(discountRaw), hasUnavailable,
+      deliveryLabel: deliveryRaw === 0 ? 'Free' : fmt(deliveryRaw), totalLabel: fmt(totalRaw), totalRaw,
+      freeDeliveryHint: (remaining > 0 && subtotalRaw > 0) ? `${fmt(remaining)} more for free delivery` : null };
+  }
+  onPlaceOrder = () => {
+    const errs = this.validateCheckout(this.state.checkoutForm);
+    if (Object.keys(errs).length) { this.setState({ checkoutErrors: errs }); return; }
+    const totals = this.computeTotals();
+    if (totals.hasUnavailable) { this.pushToast('Remove sold-out items before checking out.'); return; }
+    submitOrder().then(res => {
+      this.setState({ orderResult: { orderId: res.orderId, lines: totals.lines, totalLabel: totals.totalLabel }, route: 'confirm', cart: {}, discountApplied: false, discountInput: '' });
+      window.scrollTo(0, 0);
+    });
+  }
+
+  buildWhatsAppUrl(lines, totalLabel) {
+    const body = lines.map(l => `\u2022 ${l.name}${l.selectionLabel ? ' \u2014 ' + l.selectionLabel : ''} \u00d7 ${l.qty} \u2014 ${l.lineTotalLabel}`).join('\n');
+    const text = `Hi Mayra! I'd like to order:\n\n${body}\n\nTotal: ${totalLabel}\n\nName:\nAddress:`;
+    return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+  }
+
+  buildCard(p) {
+    const soldOut = isSoldOut(p);
+    const stock = productStock(p);
+    const low = !soldOut && stock > 0 && stock <= LOW_STOCK_AT;
+    const hasDelta = p.options.some(o => o.values.some(v => v.priceDelta));
+    const priceLabel = (hasDelta ? 'From ' : '') + fmt(p.basePrice);
+    const wished = this.state.wishlist.includes(p.id);
+    return {
+      id: p.id, name: p.name, priceLabel, img: coverImage(p, 'default', 500), alt: p.name + ' \u2014 ' + p.material,
+      badgeText: soldOut ? 'Sold out' : (p.collection === 'golden-essence' ? 'Golden Essence' : null),
+      badgeStyle: `position:absolute;top:10px;left:10px;font-family:'Jost',sans-serif;font-size:10.5px;letter-spacing:0.06em;padding:5px 10px;border-radius:999px;background:${soldOut?'rgba(46,43,37,0.75)':'#faf1de'};color:${soldOut?'#fff':'#97741f'}`,
+      lowStockLabel: low ? `Only ${stock} left` : null,
+      ctaLabel: soldOut ? 'View' : 'Add to bag',
+      onOpen: () => this.openProduct(p.id), onAdd: () => this.handleCardAdd(p),
+      isWished: wished, isWishedNot: !wished, heartLabel: wished ? 'Remove from saved' : 'Save',
+      onToggleWish: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.toggleWish(p.id); }
+    };
+  }
+  buildOptionRows(p, sel, where) {
+    return p.options.map(opt => ({
+      key: opt.key, label: opt.label, isSwatch: opt.type === 'swatch',
+      values: opt.values.map(v => {
+        const deadEnd = !optionValueHasAnyStock(p, opt.key, v.id);
+        const existsAtAll = optionValueExistsAtAll(p, opt.key, v.id);
+        const st = valueState(p, sel, opt.key, v.id);
+        const selected = sel[opt.key] === v.id;
+        const disabled = deadEnd;
+        let tooltip = null;
+        if (deadEnd) tooltip = existsAtAll ? 'Sold out in every option' : 'Not made in this combination';
+        else if (st === 'nonexistent') tooltip = 'Not made in this combination';
+        else if (st === 'soldout') tooltip = 'Sold out';
+        const vm = { id: v.id, label: v.label, hex: v.hex || null, selected, disabled, ariaDisabled: disabled ? 'true' : 'false',
+          struck: !deadEnd && st === 'soldout', hatched: deadEnd || (!deadEnd && st === 'nonexistent'), tooltip,
+          onClick: disabled ? null : () => this.applySelection(where, p, opt.key, v.id) };
+        vm.text = opt.type === 'swatch' ? '' : v.label;
+        vm.style = opt.type === 'swatch' ? swatchStyle(vm) : segStyle(vm);
+        return vm;
+      })
+    }));
+  }
+  buildPdp() {
+    const p = this.state.products.find(x => x.id === this.state.pdpProductId);
+    if (!p) return null;
+    const sel = this.state.pdpSelection;
+    const soldOutEverything = isSoldOut(p);
+    const variant = getVariant(p, sel);
+    const inStock = !!variant && variant.stock > 0;
+    const price = variantPrice(p, sel);
+    const cap = variant ? Math.max(0, variant.stock) : 0;
+    const optionRows = this.buildOptionRows(p, sel, 'pdp');
+    const colourKey = p.options.find(o => o.key === 'colour') ? sel.colour : 'default';
+    const gallery = galleryImages(p, colourKey, 1000);
+    const gi = Math.min(this.state.pdpGalleryIndex || 0, gallery.length - 1);
+    const wished = this.state.wishlist.includes(p.id);
+    let stockLine = 'In stock', stockColor = '#3d4a35';
+    if (soldOutEverything) { stockLine = 'Sold out'; stockColor = '#d67f48'; }
+    else if (!inStock) { stockLine = 'Select an available option'; stockColor = '#d67f48'; }
+    else if (variant.stock <= LOW_STOCK_AT) { stockLine = `Only ${variant.stock} left`; stockColor = '#d67f48'; }
+    const related = this.state.products.filter(x => x.id !== p.id && x.category === p.category).slice(0, 4).map(x => this.buildCard(x));
+    const qty = this.state.pdpQty;
+    return {
+      id: p.id, name: p.name, blurb: p.blurb, material: p.material, priceLabel: fmt(price),
+      badgeText: p.collection === 'golden-essence' ? 'Golden Essence' : null,
+      badgeStyle: "display:inline-block;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.06em;padding:5px 12px;border-radius:999px;background:#faf1de;color:#97741f",
+      stockLine, stockColor, soldOutEverything, optionRows,
+      selectionSummary: fmt(price) + (selectionLabel(p, sel) ? ' \u00b7 ' + selectionLabel(p, sel) : ''),
+      galleryMain: gallery[gi], galleryDots: gallery.map((g, i) => ({ n: i + 1, dotColor: i === gi ? '#97741f' : 'rgba(46,43,37,0.25)', onClick: () => this.setState({ pdpGalleryIndex: i }) })),
+      showQty: !soldOutEverything, qty, qtyCap: cap, qtyDownDisabled: qty <= 1, qtyUpDisabled: qty >= cap,
+      qtyCapLabel: cap > 0 && cap <= LOW_STOCK_AT ? `${cap} available` : null,
+      ctaLabel: soldOutEverything ? 'Sold out' : (inStock ? 'Add to bag' : 'Select an option'),
+      ctaDisabled: soldOutEverything || !inStock,
+      ctaStyle: `flex:1;min-width:160px;min-height:44px;border-radius:999px;border:none;background:${(soldOutEverything||!inStock)?'rgba(46,43,37,0.25)':'#c8a24a'};color:#fff;font-family:'Jost',sans-serif;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;cursor:${(soldOutEverything||!inStock)?'not-allowed':'pointer'}`,
+      onCta: () => { if (inStock) this.addToCart(p, sel, qty); },
+      onWhatsapp: () => window.open(this.buildWhatsAppUrl([{ name: p.name, selectionLabel: selectionLabel(p, sel), qty, lineTotalLabel: fmt(price * qty) }], fmt(price * qty)), '_blank'),
+      qtyDown: () => this.changeQty('pdp', -1, cap), qtyUp: () => this.changeQty('pdp', 1, cap),
+      isWished: wished, isWishedNot: !wished, wishLabel: wished ? 'Saved' : 'Save for later', onToggleWish: () => this.toggleWish(p.id),
+      note: this.state.pdpNote, careOpen: this.state.careOpen, careChevron: this.state.careOpen ? '\u2212' : '+',
+      toggleCare: () => this.setState(s => ({ careOpen: !s.careOpen })), care: p.care,
+      sizeGuideOpen: this.state.sizeGuideOpen, openSizeGuide: () => this.setState({ sizeGuideOpen: true }), closeSizeGuide: () => this.setState({ sizeGuideOpen: false }),
+      notifyEmail: this.state.notifyEmail, onNotifyEmail: e => this.setState({ notifyEmail: e.target.value }),
+      onNotifySubmit: () => { this.pushToast("Thanks \u2014 we'll email you when it's back."); this.setState({ notifyEmail: '' }); },
+      related
+    };
+  }
+  buildSheet() {
+    const s = this.state.sheet; if (!s) return null;
+    const p = this.state.products.find(x => x.id === s.productId); if (!p) return null;
+    const variant = getVariant(p, s.selection);
+    const inStock = !!variant && variant.stock > 0;
+    const cap = variant ? Math.max(0, variant.stock) : 0;
+    const price = variantPrice(p, s.selection);
+    let stockLine = inStock ? (variant.stock <= LOW_STOCK_AT ? `Only ${variant.stock} left` : 'In stock') : 'Select an available option';
+    return {
+      name: p.name, img: coverImage(p, s.selection.colour, 200), priceLabel: fmt(price), stockLine,
+      optionRows: this.buildOptionRows(p, s.selection, 'sheet'), note: s.note,
+      qty: s.qty, qtyDownDisabled: s.qty <= 1, qtyUpDisabled: s.qty >= cap,
+      qtyDown: () => this.changeQty('sheet', -1, cap), qtyUp: () => this.changeQty('sheet', 1, cap),
+      confirmDisabled: !inStock, confirmOpacity: inStock ? 1 : 0.5
+    };
+  }
+
+  buildCartLines() {
+    return Object.keys(this.state.cart).map(key => {
+      const item = this.state.cart[key]; const p = this.state.products.find(x => x.id === item.productId); if (!p) return null;
+      const variant = getVariant(p, item.selection); const available = !!variant && variant.stock > 0; const cap = variant ? variant.stock : 0;
+      const lineTotal = available ? variantPrice(p, item.selection) * item.qty : 0;
+      return { key, name: p.name, img: coverImage(p, item.selection.colour, 300), selectionLabel: selectionLabel(p, item.selection),
+        qty: item.qty, upDisabled: item.qty >= cap, onUp: () => this.changeCartQty(key, 1), onDown: () => this.changeCartQty(key, -1), onRemove: () => this.removeCartItem(key),
+        lineTotalLabel: available ? fmt(lineTotal) : 'Rs 0', lineTotalRaw: lineTotal, available, opacity: available ? 1 : 0.5,
+        unavailableMsg: !available ? 'Sold out \u2014 remove to continue' : null };
+    }).filter(Boolean);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const products = s.products;
+    const q = s.searchQuery.trim().toLowerCase();
+
+    const totals = this.computeTotals();
+    const cartCount = totals.lines.reduce((sum, l) => sum + l.qty, 0);
+
+    let shopList = products.slice();
+    if (s.filterCategory !== 'all') shopList = shopList.filter(p => p.category === s.filterCategory);
+    if (s.inStockOnly) shopList = shopList.filter(p => !isSoldOut(p));
+    if (q) shopList = shopList.filter(p => (p.name + ' ' + p.material + ' ' + p.category + ' ' + (p.collection || '')).toLowerCase().includes(q));
+    if (s.sortBy === 'price-asc') shopList = shopList.slice().sort((a, b) => a.basePrice - b.basePrice);
+    else if (s.sortBy === 'price-desc') shopList = shopList.slice().sort((a, b) => b.basePrice - a.basePrice);
+    else if (s.sortBy === 'newest') shopList = shopList.slice().reverse();
+    const shopCards = shopList.map(p => this.buildCard(p));
+    const shopEmpty = shopCards.length === 0;
+    const emptyBySearch = shopEmpty && q.length > 0;
+
+    const categoryChipStyle = (active) => `padding:9px 16px;min-height:44px;border-radius:999px;border:1px solid ${active ? '#c8a24a' : 'rgba(46,43,37,0.2)'};background:${active ? '#faf1de' : 'transparent'};color:${active ? '#97741f' : '#2e2b25'};font-family:'Jost',sans-serif;font-size:12.5px;letter-spacing:0.04em;white-space:nowrap;cursor:pointer;flex-shrink:0`;
+    const categoryChips = [{ id: 'all', label: 'All' }].concat(CATEGORIES).map(c => ({ id: c.id, label: c.label, style: categoryChipStyle(s.filterCategory === c.id), onClick: () => this.setState({ filterCategory: c.id }) }));
+
+    const pdp = this.buildPdp();
+    const sheet = this.buildSheet();
+    const cartLines = totals.lines;
+
+    const errBorderFor = (field) => s.checkoutErrors[field] ? '#d67f48' : 'rgba(46,43,37,0.2)';
+
+    return {
+      isLanding: s.route === 'landing', isShop: s.route === 'shop', isCollection: s.route === 'collection', isProduct: s.route === 'product',
+      isCart: s.route === 'cart', isCheckout: s.route === 'checkout', isConfirm: s.route === 'confirm', isAbout: s.route === 'about', isWishlist: s.route === 'wishlist',
+      goLanding: this.goLanding, goShop: this.goShop, goCollection: this.goCollection, goAbout: this.goAbout, goCart: this.goCart, goCheckout: this.goCheckout, goWishlist: this.goWishlist,
+      showDesktopNav: !s.isMobile, showMobileTabs: s.isMobile,
+      shopUnderline: s.route === 'shop' ? '2px solid #c8a24a' : '2px solid transparent',
+      collectionUnderline: s.route === 'collection' ? '2px solid #c8a24a' : '2px solid transparent',
+      aboutUnderline: s.route === 'about' ? '2px solid #c8a24a' : '2px solid transparent',
+      tabShopColor: (s.route === 'shop' || s.route === 'landing' || s.route === 'collection' || s.route === 'product') ? '#97741f' : '#2e2b25',
+      tabWishColor: s.route === 'wishlist' ? '#97741f' : '#2e2b25', tabCartColor: (s.route === 'cart' || s.route === 'checkout' || s.route === 'confirm') ? '#97741f' : '#2e2b25',
+      cartCount, wishCount: s.wishlist.length,
+      searchOpen: s.searchOpen, toggleSearch: this.toggleSearch, searchQuery: s.searchQuery, onSearchInput: this.onSearchInput,
+      searchResultLabel: q ? `${shopCards.length} result${shopCards.length === 1 ? '' : 's'} for \u201c${s.searchQuery}\u201d` : '',
+      reopenPopup: () => this.reopenPopup(),
+      announcementVisible: s.announcementVisible, dismissAnnouncement: () => this.dismissAnnouncement(), announceShopNow: () => this.announceShopNow(),
+
+      popupOpen: s.popupOpen, closePopup: () => this.closePopup(), popupShopOffer: () => this.popupShopOffer(), stopClick: this.stopClick,
+      popupBoxStyle: `position:relative;background:#fdf8ef;border-radius:18px;overflow:hidden;max-width:min(90vw,420px);max-height:90vh;width:100%;${s.reducedMotion ? '' : 'animation:none;'}box-shadow:0 20px 60px rgba(0,0,0,0.3)`,
+
+      categoryDoors: CATEGORIES.map(c => ({ id: c.id, label: c.label, onClick: () => this.go('shop', { category: c.id }) })),
+      featuredCards: products.filter(p => !isSoldOut(p)).slice(0, 4).map(p => this.buildCard(p)),
+
+      shopTitle: s.filterCategory === 'all' ? 'Shop' : (CATEGORIES.find(c => c.id === s.filterCategory) || {}).label,
+      categoryChips, inStockChipStyle: categoryChipStyle(s.inStockOnly), toggleInStockOnly: () => this.setState(st => ({ inStockOnly: !st.inStockOnly })),
+      resultCountLabel: `${shopCards.length} piece${shopCards.length === 1 ? '' : 's'}`,
+      sortBy: s.sortBy, onSortChange: (e) => this.setState({ sortBy: e.target.value }),
+      sortOptions: [{ id: 'featured', label: 'Featured' }, { id: 'price-asc', label: 'Price: low to high' }, { id: 'price-desc', label: 'Price: high to low' }, { id: 'newest', label: 'Newest' }],
+      shopEmpty, shopHasResults: !shopEmpty, shopCards,
+      shopEmptyMessage: emptyBySearch ? `Nothing matches \u201c${s.searchQuery}\u201d.` : 'Nothing matches these filters.',
+      shopEmptyActionLabel: emptyBySearch ? 'Clear search' : 'Clear filters',
+      shopEmptyAction: emptyBySearch ? (() => this.setState({ searchQuery: '' })) : (() => this.setState({ filterCategory: 'all', inStockOnly: false })),
+      suggestedCards: products.slice(0, 4).map(p => this.buildCard(p)),
+
+      collectionCards: products.filter(p => p.collection === 'golden-essence').map(p => this.buildCard(p)),
+      shopFullStack: () => this.shopFullStack(),
+
+      pdp, addToBagRef: () => {},
+
+      cartEmpty: cartLines.length === 0, cartHasItems: cartLines.length > 0, cartLines,
+      cartReconcileNote: s.cartReconcileNote,
+      subtotalLabel: totals.subtotalLabel, discountLabel: totals.discountLabel, discountApplied: s.discountApplied,
+      deliveryLabel: totals.deliveryLabel, totalLabel: totals.totalLabel, freeDeliveryHint: totals.freeDeliveryHint,
+      checkoutDisabled: totals.hasUnavailable || cartLines.length === 0, checkoutOpacity: (totals.hasUnavailable || cartLines.length === 0) ? 0.5 : 1,
+      whatsappCartUrl: this.buildWhatsAppUrl(cartLines, totals.totalLabel),
+
+      form: { name: s.checkoutForm.name, phone: s.checkoutForm.phone, email: s.checkoutForm.email, address: s.checkoutForm.address, city: s.checkoutForm.city, postal: s.checkoutForm.postal, note: s.checkoutForm.note,
+        card: s.checkoutForm.card, expiry: s.checkoutForm.expiry, cvc: s.checkoutForm.cvc,
+        onName: e => this.setCheckoutField('name', e.target.value), onPhone: e => this.setCheckoutField('phone', e.target.value), onEmail: e => this.setCheckoutField('email', e.target.value),
+        onAddress: e => this.setCheckoutField('address', e.target.value), onCity: e => this.setCheckoutField('city', e.target.value),
+        onPostal: e => this.setCheckoutField('postal', e.target.value), onNote: e => this.setCheckoutField('note', e.target.value),
+        onCard: e => this.setCheckoutField('card', e.target.value), onExpiry: e => this.setCheckoutField('expiry', e.target.value), onCvc: e => this.setCheckoutField('cvc', e.target.value) },
+      errors: s.checkoutErrors, errBorder: { name: errBorderFor('name'), phone: errBorderFor('phone'), email: errBorderFor('email'), address: errBorderFor('address'), city: errBorderFor('city'), card: errBorderFor('card'), expiry: errBorderFor('expiry'), cvc: errBorderFor('cvc') },
+      payMethods: [{ id: 'cod', label: 'Cash on delivery' }, { id: 'card', label: 'Card payment' }, { id: 'bank', label: 'Bank transfer' }].map(m => ({
+        label: m.label, checked: s.checkoutForm.payMethod === m.id,
+        border: s.checkoutForm.payMethod === m.id ? '#c8a24a' : 'rgba(46,43,37,0.2)', bg: s.checkoutForm.payMethod === m.id ? '#faf1de' : 'transparent',
+        onSelect: () => this.setCheckoutField('payMethod', m.id) })),
+      isCardPay: s.checkoutForm.payMethod === 'card',
+      discountInput: s.discountInput, onDiscountInput: e => this.setState({ discountInput: e.target.value }), applyDiscountCode: this.applyDiscountCode, discountError: s.discountError,
+      onPlaceOrder: this.onPlaceOrder,
+
+      orderId: (s.orderResult && s.orderResult.orderId) || '', orderLines: (s.orderResult && s.orderResult.lines) || [], orderTotalLabel: (s.orderResult && s.orderResult.totalLabel) || fmt(0),
+      whatsappConfirmUrl: this.buildWhatsAppUrl((s.orderResult && s.orderResult.lines) || [], (s.orderResult && s.orderResult.totalLabel) || fmt(0)),
+      whatsappGeneralUrl: `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hi Mayra! I have a question about a piece.')}`,
+
+      wishEmpty: s.wishlist.length === 0, wishHasItems: s.wishlist.length > 0,
+      wishCards: s.wishlist.map(id => products.find(p => p.id === id)).filter(Boolean).map(p => this.buildCard(p)),
+
+      instaTiles: products.slice(0, 6).map(p => ({ img: coverImage(p, 'default', 300) })),
+      instaFollowUrl: 'https://instagram.com/mayra',
+
+      sheetOpen: !!sheet, sheet, closeSheet: () => this.closeSheet(), confirmSheet: () => this.confirmSheet(),
+      sheetAlign: s.isMobile ? 'flex-end' : 'center',
+      sheetBoxStyle: s.isMobile
+        ? 'position:relative;background:#fdf8ef;border-radius:20px 20px 0 0;padding:22px;width:100%;max-height:80vh;overflow-y:auto'
+        : 'position:relative;background:#fdf8ef;border-radius:20px;padding:26px;max-width:420px;width:100%;max-height:85vh;overflow-y:auto',
+
+      toast: s.toast, toastVisible: !!s.toast, toastMessage: s.toast ? s.toast.message : '', toastLinkLabel: s.toast ? s.toast.linkLabel : null, toastOnLink: s.toast ? s.toast.onLink : null,
+      toastBottom: s.isMobile ? 78 : 28, toastPointer: s.toast ? 'auto' : 'none',
+
+      stickyVisible: s.route === 'product' && s.scrolledPastHero && pdp && !pdp.soldOutEverything,
+      stickyBottom: s.isMobile ? 58 : 0,
+      stickyName: pdp ? pdp.name : '', stickyPrice: pdp ? pdp.priceLabel : '',
+      stickyCtaDisabled: pdp ? pdp.ctaDisabled : true, stickyCtaLabel: pdp ? pdp.ctaLabel : '', stickyOnCta: pdp ? pdp.onCta : (() => {}),
+      bottomPad: s.isMobile ? 64 : 0
+    };
+  }
+}
+</script>
+</body>
+</html>

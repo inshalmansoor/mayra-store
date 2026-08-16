@@ -1,0 +1,5 @@
+# Vercel's Python runtime resolves requirements.txt relative to the project's
+# Root Directory, which is `frontend/` (see plans/07-deployment-vercel.md
+# §1-2). The real dependency list lives in backend/requirements.txt, one
+# level up from here.
+-r ../backend/requirements.txt

@@ -1,0 +1,111 @@
+/* Design tokens carried over from reference/Mayra Store.dc.html — see
+   plans/04-frontend-nextjs.md §6. Fonts are loaded via next/font in
+   layout.tsx (self-hosted, no external @import). */
+
+:root {
+  --gold-100: #faf1de;
+  --gold-300: #e6cf9a;
+  --gold-500: #c8a24a;
+  --gold-700: #97741f;
+  --forest-500: #3d4a35;
+  --forest-700: #2d3a2b;
+  --clay-500: #d67f48;
+
+  --bg: #f5ead8;
+  --surface: #fdf8ef;
+  --ink: #2e2b25;
+  --ink-soft: #6b6656;
+  --line: rgba(46, 43, 37, 0.14);
+
+  --tracking-wordmark: 0.42em;
+  --tracking-caps: 0.32em;
+
+  --fs-body: 17px;
+  --lh-body: 1.65;
+
+  --radius-pill: 999px;
+  --header-h: 64px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+a {
+  color: var(--gold-700);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--gold-500);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--gold-500);
+  outline-offset: 2px;
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--gold-300);
+  border-radius: 999px;
+}
+
+.mrow:hover .mimg {
+  transform: scale(1.045);
+}
+.mimg {
+  transition: transform 0.5s ease;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,55 @@
+{% extends "_layout.html" %}
+{% block title %}New order {{ order.order_number }}{% endblock %}
+{% block content %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+  <tr><td style="font-family:Georgia,serif;font-size:24px;color:#2e2b25;font-weight:bold;">
+    {{ order.order_number }} &middot; {{ fmt(order.total) }}
+  </td></tr>
+  <tr><td style="font-family:Georgia,serif;font-size:14px;color:#97741f;padding-top:4px;">
+    {{ order.payment_method|upper }}
+    {% if order.payment_method == 'bank' %} — mark as paid in the admin panel once the transfer lands{% endif %}
+  </td></tr>
+</table>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#faf1de;margin-bottom:20px;">
+  <tr><td style="padding:14px 16px;font-family:Georgia,serif;font-size:14px;color:#2e2b25;">
+    <strong>{{ order.customer_name }}</strong><br>
+    <a href="tel:{{ order.customer_phone }}" style="color:#97741f;">{{ order.customer_phone }}</a> &middot; {{ order.customer_email }}<br>
+    {{ order.address }}, {{ order.city }}{% if order.postal_code %} {{ order.postal_code }}{% endif %}
+    {% if order.note %}<br><em>Note: {{ order.note }}</em>{% endif %}
+  </td></tr>
+</table>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
+  {% for item in order.items %}
+  <tr>
+    <td style="padding:6px 0;font-family:Georgia,serif;font-size:14px;color:#2e2b25;border-bottom:1px solid #e6cf9a;">
+      {{ item.product_name }}{% if item.selection_label %} — {{ item.selection_label }}{% endif %}
+      <br><span style="color:#6b6656;font-size:12px;">SKU {{ item.sku }}</span>
+    </td>
+    <td align="center" style="padding:6px 0;font-family:Georgia,serif;font-size:14px;color:#2e2b25;border-bottom:1px solid #e6cf9a;">&times;{{ item.qty }}</td>
+    <td align="right" style="padding:6px 0;font-family:Georgia,serif;font-size:14px;color:#2e2b25;border-bottom:1px solid #e6cf9a;">{{ fmt(item.line_total) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% if low_stock_lines %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;background-color:#fdecea;">
+  <tr><td style="padding:12px 14px;font-family:Georgia,serif;font-size:13px;color:#8a2c1a;">
+    {% for line in low_stock_lines %}⚠ {{ line }}<br>{% endfor %}
+  </td></tr>
+</table>
+{% endif %}
+
+<table role="presentation" cellpadding="0" cellspacing="0">
+  <tr>
+    <td style="border-radius:999px;background-color:#97741f;">
+      <a href="{{ admin_url }}" style="display:inline-block;padding:11px 22px;font-family:Arial,sans-serif;font-size:13px;letter-spacing:1px;color:#ffffff;text-decoration:none;">OPEN IN ADMIN</a>
+    </td>
+    <td width="10"></td>
+    <td style="border-radius:999px;background-color:#3d4a35;">
+      <a href="https://wa.me/{{ order.customer_phone|replace('+','')|replace(' ','') }}" style="display:inline-block;padding:11px 22px;font-family:Arial,sans-serif;font-size:13px;letter-spacing:1px;color:#ffffff;text-decoration:none;">WHATSAPP CUSTOMER</a>
+    </td>
+  </tr>
+</table>
+{% endblock %}
