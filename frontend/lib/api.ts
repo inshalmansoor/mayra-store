@@ -40,8 +40,18 @@ function apiBase(): string {
     return "";
   }
   // Server (Server Components, route handlers): fetch() needs an absolute
-  // URL. In dev this talks straight to the running FastAPI process; on
-  // Vercel it targets the deployment's own origin, which then rewrites.
+  // URL. In dev this talks straight to the running FastAPI process.
+  //
+  // In production, NEXT_PUBLIC_API_BASE_URL must be set to the real
+  // production domain (e.g. https://mayra-store.vercel.app) rather than
+  // left blank. The obvious alternative - falling back to Vercel's
+  // auto-injected VERCEL_URL - was tried and confirmed unreliable in
+  // practice: static/ISR pages that self-fetch their own API via
+  // VERCEL_URL at build and revalidation time came back empty (the fetch
+  // silently failed and the .catch() fallback swallowed it), even though
+  // the exact same endpoint answered correctly to an external request.
+  // VERCEL_URL is kept only as a last-resort fallback for previews/branches
+  // where the production URL env var may not be configured.
   if (process.env.NEXT_PUBLIC_API_BASE_URL) return process.env.NEXT_PUBLIC_API_BASE_URL;
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return "http://127.0.0.1:8000";

@@ -86,15 +86,16 @@ Copy from your `.env`, with these three changed for production:
 | Key | Production value |
 |---|---|
 | `APP_ENV` | `production` |
-| `ALLOWED_ORIGINS` | `https://<your-project>.vercel.app` |
-| `NEXT_PUBLIC_API_BASE_URL` | *(empty — same origin, the rewrite handles it)* |
+| `ALLOWED_ORIGINS` | `https://<your-project>.vercel.app` (the real domain, not blank — an empty value resolves to zero allowed origins) |
+| `NEXT_PUBLIC_API_BASE_URL` | `https://<your-project>.vercel.app` (the real domain, **not blank** — see the note below) |
 
 Everything else — `DATABASE_URL`, `SUPABASE_*`, `ADMIN_*`, `BREVO_*`, `OWNER_EMAIL`, the store rules, the bank details — carries over unchanged.
 
-Two rules:
+Three rules:
 
 - **`NEXT_PUBLIC_*` variables are compiled into the JavaScript bundle** and readable by anyone with devtools. Only the four public values may carry that prefix. If `SUPABASE_SERVICE_ROLE_KEY` or `ADMIN_PASSWORD` ever gets a `NEXT_PUBLIC_` prefix, the secret is public — rotate it, do not just rename it.
-- **Changing an env var does not redeploy.** The new value applies on the next deployment. After editing, trigger a redeploy or the app keeps using the old value, which is a confusing twenty minutes.
+- **`NEXT_PUBLIC_API_BASE_URL` must be the real production URL, not blank.** The original plan here was to leave it empty and let the server fall back to Vercel's auto-injected `VERCEL_URL` for same-deployment self-fetches (used by `getProducts()`/`getSettings()` in server components). That fallback was tested against a real deployment and found unreliable: the static/ISR pages that self-fetch their own catalogue via `VERCEL_URL` came back with an empty product list — the fetch failed silently and the code's own `.catch()` swallowed it — even though hitting the identical endpoint from outside the deployment worked every time. Symptom to watch for: the admin panel (entirely client-rendered, always same-origin) shows real data while the storefront (server-rendered) shows nothing. Fix is to set this explicitly to the known-working production domain.
+- **Changing an env var does not redeploy, and for this specific one, a redeploy of the *same build* isn't enough either.** `/`, `/shop`, etc. are static/ISR pages — their data was fetched once at build time and baked in. You need an actual fresh `next build` (a new commit push, or "Redeploy" **with** "Use existing Build Cache" turned off) for the corrected URL to take effect, not just a redeploy that reuses the prior build's output.
 
 ---
 
