@@ -75,7 +75,7 @@ Mayra Store v2 Implementation/
 │
 ├── frontend/                   ← Vercel Project Root Directory
 │   ├── package.json  tsconfig.json  next.config.ts  eslint.config.mjs
-│   ├── requirements.txt        ← `-r ../backend/requirements.txt`
+│   ├── requirements.txt        ← full duplicate of backend/requirements.txt — see plans/07 §2
 │   ├── vercel.json             ← Python function config + the keepalive cron
 │   ├── .env.local              ← NEXT_PUBLIC_* values for local dev, git-ignored
 │   ├── api/

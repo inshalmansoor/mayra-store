@@ -38,17 +38,15 @@ Vercel serves it at `/api/index`, and `frontend/next.config.ts` rewrites `/api/:
 
 ---
 
-## 2. `frontend/requirements.txt` — the one deployment gotcha
+## 2. `frontend/requirements.txt` — the one deployment gotcha (verified against a real Vercel build)
 
 **Vercel's Python runtime resolves `requirements.txt` relative to the project's Root Directory** — `frontend/`, per §1. Your dependencies are in `backend/requirements.txt`, one level up, which Vercel will not find on its own, and the build fails with `ModuleNotFoundError: No module named 'fastapi'` — an error that looks like a code problem and is not.
 
-`frontend/requirements.txt` contains exactly:
+The obvious fix — `-r ../backend/requirements.txt` as the entire content of `frontend/requirements.txt` — looks correct and even **appears to work partway**: Vercel's dependency installer (`uv`) resolves and installs every package from it without complaint. But a *second*, separate stage — Vercel's Python function bundler, which packages the deployed function after the whole build otherwise succeeds — uses a stricter parser that cannot follow a parent-directory (`../`) include at all, and fails the entire build right at the end with `could not parse requirements.txt`. This was confirmed against two real deploys: the first failure looked like a comment-parsing issue and got fixed; the second, identical failure pointed at the include line itself, with the comment issue already gone.
 
-```
--r ../backend/requirements.txt
-```
+The fix that actually works: **`frontend/requirements.txt` is a full duplicate of `backend/requirements.txt`, not a reference to it.** No `-r`, no relative path, nothing for that bundler to trip on — it's just a flat list of pins. The cost is that the two files must be kept in sync by hand; there is no dependency-manager magic that avoids this while staying inside Vercel's Python runtime constraints. If you add or change a package, edit both files.
 
-pip resolves the include relative to the file, and with "include files outside the Root Directory" on (§1), `../backend/` is in the build context. One source of truth, both environments happy.
+Also avoid comment text in either file that merely *resembles* an include directive (e.g. writing out `-r some/path` as an example inside a comment) — the same bundler was observed choking on that too, treating commented-out text as a real directive.
 
 ---
 

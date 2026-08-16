@@ -154,7 +154,7 @@ Step 3 is the one people skip. It is the one that matters.
 
 ## Phase 10 — Deploy · ~3 hours
 
-- [ ] Root `requirements.txt` with `-r backend/requirements.txt`
+- [ ] `frontend/requirements.txt` kept as a full duplicate of `backend/requirements.txt` — see plans/07 §2, do not use a `-r ../backend/requirements.txt` include, it fails Vercel's Python function bundler
 - [ ] `vercel.json` — function config, cron, admin headers
 - [ ] `public/robots.txt` disallowing `/admin`
 - [ ] `/docs` and `/redoc` disabled when `APP_ENV == "production"`

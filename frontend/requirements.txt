@@ -1,4 +1,34 @@
+# Mayra Store - FastAPI backend dependencies, duplicated from
+# backend/requirements.txt for Vercel deploys.
+#
 # Vercel's Python runtime resolves requirements.txt relative to the
-# project's Root Directory, which is frontend/. The real dependency list
-# lives in backend/requirements.txt, one level up from here.
--r ../backend/requirements.txt
+# project's Root Directory, which is frontend/. A parent-directory include
+# pointing back at backend/requirements.txt fails to parse in Vercel's
+# Python function bundler (a stricter, separate parser from the tool that
+# installs the packages), even though it works fine with pip/uv locally.
+# So this is a full copy, not a reference - if you change one, change both.
+
+# --- Web framework -----------------------------------------------------------
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.34,<1.0
+python-multipart>=0.0.20,<0.1
+
+# --- Validation & settings ---------------------------------------------------
+pydantic>=2.9,<3.0
+pydantic-settings>=2.6,<3.0
+email-validator>=2.2,<3.0
+python-dotenv>=1.0,<2.0
+
+# --- Database: Supabase Postgres ---------------------------------------------
+sqlalchemy>=2.0,<2.1
+psycopg[binary]>=3.2,<4.0
+alembic>=1.14,<2.0
+
+# --- Admin auth ----------------------------------------------------------------
+pyjwt>=2.10,<3.0
+
+# --- Outbound HTTP: Brevo email + Supabase Storage uploads --------------------
+httpx>=0.27,<1.0
+
+# --- HTML email templates ----------------------------------------------------
+jinja2>=3.1,<4.0

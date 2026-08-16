@@ -1,12 +1,17 @@
 # Mayra Store - FastAPI backend dependencies.
 #
 # Local install: activate myenv, then point pip at this file from the
-# project root. Deployed to Vercel through frontend/requirements.txt,
-# which includes this file by relative path.
+# project root.
+#
+# THIS LIST IS DUPLICATED in frontend/requirements.txt for Vercel deploys.
+# Vercel's Python function bundler cannot follow a parent-directory include
+# (a "dash r" reference to a file one level up) - it fails to parse it even
+# though pip/uv handle that same reference fine locally. If you add or
+# change a dependency here, make the same change there.
 #
 # Keep this file plain text with no directive-like patterns in comments -
-# Vercel's Python function bundler uses a simpler parser than pip/uv and
-# has been observed choking on stray text that resembles an include flag.
+# that same bundler has also been seen choking on stray text that merely
+# resembles an include flag, even inside a comment.
 
 # --- Web framework -----------------------------------------------------------
 fastapi>=0.115,<1.0
