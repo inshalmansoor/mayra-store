@@ -108,7 +108,7 @@ def create_order(payload: OrderCreateIn, db: Session = Depends(get_db)):
             suffix = f" ({line.selection_label})" if line.selection_label else ""
             low_stock_lines.append(f"{line.product.name}{suffix} is down to {line.variant.stock} after this order.")
 
-    order_number = f"MYR-{db.execute(select(order_number_seq)).scalar()}"
+    order_number = f"MYR-{db.execute(select(order_number_seq.next_value())).scalar()}"
 
     order = Order(
         order_number=order_number,

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from ..config import settings
 from ..db import get_db
-from ..models import Category, NotifyRequest, Product, Setting
+from ..models import Category, NotifyRequest, Product, ProductOption, Setting
 from ..pricing import code_is_valid
 from ..schemas import (
     AnnouncementOut,
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/api", tags=["public"])
 
 def _product_query(db: Session):
     return db.query(Product).options(
-        selectinload(Product.options).selectinload("values"),
+        selectinload(Product.options).selectinload(ProductOption.values),
         selectinload(Product.variants),
         selectinload(Product.images),
     )
