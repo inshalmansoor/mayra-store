@@ -24,6 +24,11 @@ next-env.d.ts
 # --- Vercel ------------------------------------------------------------------
 .vercel/
 
+# frontend/backend/ is a build-time copy made by scripts/copy-backend.mjs
+# (npm "prebuild" hook) so Vercel's Python function bundler has it inside
+# the Root Directory. Never the source of truth - edit backend/ instead.
+frontend/backend/
+
 # --- Editors / OS ------------------------------------------------------------
 .vscode/
 .idea/

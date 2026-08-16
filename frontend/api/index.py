@@ -1,22 +1,21 @@
 """
-Vercel Python entrypoint. Lives under frontend/ (the Vercel project's Root
-Directory — see plans/07-deployment-vercel.md §1-2) so that Vercel's
-zero-config Next.js detection finds package.json at the project root while
-this file's own directory (frontend/api/) still gets picked up as a Python
-serverless function.
+Vercel Python entrypoint.
 
-backend/ is a SIBLING of frontend/ at the true repository root, two levels
-up from this file. Reaching it requires:
-  1. Vercel Project Settings -> General -> "Include source files outside of
-     the Root Directory in the Build Step" switched ON, so backend/ is part
-     of the deployment bundle at all.
-  2. The sys.path insert below, so Python can import it as a package.
+backend/ is copied to frontend/backend/ by scripts/copy-backend.mjs (an npm
+"prebuild" hook, so it runs automatically before every `npm run build`,
+including Vercel's). That script exists because Vercel's Python function
+bundler was observed to silently drop files from outside the Root
+Directory at deploy time - even with "Include source files outside of the
+Root Directory in the Build Step" on - producing
+"ModuleNotFoundError: No module named 'backend'" at runtime. Copying it in
+removes the ambiguity: this always imports a local package, one directory
+up from this file, both locally and on Vercel.
 """
 import sys
 from pathlib import Path
 
-_repo_root = Path(__file__).resolve().parents[2]  # frontend/api/ -> frontend/ -> repo root
-if str(_repo_root) not in sys.path:
-    sys.path.insert(0, str(_repo_root))
+_frontend_root = Path(__file__).resolve().parents[1]  # frontend/api/ -> frontend/
+if str(_frontend_root) not in sys.path:
+    sys.path.insert(0, str(_frontend_root))
 
 from backend.app.main import app  # noqa: E402, F401
