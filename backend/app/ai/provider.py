@@ -14,7 +14,12 @@ from fastapi import HTTPException, status
 from ..config import settings
 from .schema import AGENT_TURN_RESPONSE_SCHEMA
 
-GEMINI_TIMEOUT = 20.0  # seconds — stays under vercel.json's maxDuration: 30
+GEMINI_TIMEOUT = 26.0  # seconds — vercel.json caps the function at 30; a
+# real delegation turn (asking Gemini to apply several defaults in one
+# response) was observed taking a little over 20s, so a tighter client-side
+# timeout was cutting off requests that Vercel's own limit would have let
+# finish. 26s leaves a few seconds of headroom for the surrounding request
+# handling, not more.
 
 
 class ProviderError(Exception):
