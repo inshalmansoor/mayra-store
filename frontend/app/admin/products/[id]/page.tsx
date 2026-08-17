@@ -26,6 +26,8 @@ export default function EditProductPage() {
   const [savingDetails, setSavingDetails] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   function refresh() {
     adminGetProduct(params.id).then(setProduct);
@@ -60,9 +62,6 @@ export default function EditProductPage() {
       setSavingDetails(false);
     }
   }
-
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   async function deactivate() {
     if (!confirm("Deactivate this product? It disappears from the storefront but past orders keep their own record of it. You can reactivate it any time by editing it and saving.")) return;
