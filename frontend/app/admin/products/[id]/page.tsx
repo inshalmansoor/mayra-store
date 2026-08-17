@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { adminAiRegenerateCopy, adminAiStatus, adminDeactivateProduct, adminGetProduct, adminUpdateProduct } from "@/lib/admin-api";
+import {
+  adminAiRegenerateCopy,
+  adminAiStatus,
+  adminDeactivateProduct,
+  adminDeleteProductPermanently,
+  adminGetProduct,
+  adminUpdateProduct,
+} from "@/lib/admin-api";
 import type { AdminProduct } from "@/lib/admin-types";
 import type { AiSuggestion } from "@/lib/ai-types";
 import { ApiError } from "@/lib/api";
@@ -54,19 +61,54 @@ export default function EditProductPage() {
     }
   }
 
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   async function deactivate() {
-    if (!confirm("Deactivate this product? It disappears from the storefront but past orders keep their own record of it.")) return;
+    if (!confirm("Deactivate this product? It disappears from the storefront but past orders keep their own record of it. You can reactivate it any time by editing it and saving.")) return;
     await adminDeactivateProduct(product!.id);
     router.push("/admin/products");
+  }
+
+  async function deletePermanently() {
+    const typed = prompt(
+      `This permanently deletes “${product!.name}”, its photos, options and variants. This cannot be undone.\n\n` +
+        `Past orders are unaffected — they keep their own copy of the name, price and photo.\n\n` +
+        `Type the product's slug to confirm: ${product!.slug}`,
+    );
+    if (typed !== product!.slug) {
+      if (typed !== null) alert("That didn't match the slug — nothing was deleted.");
+      return;
+    }
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await adminDeleteProductPermanently(product!.id);
+      router.push("/admin/products");
+    } catch (e) {
+      setDeleteError(e instanceof ApiError ? e.message2 : "Could not delete this product.");
+      setDeleting(false);
+    }
   }
 
   return (
     <div style={{ maxWidth: 720 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <h1 style={{ fontSize: 22, margin: 0 }}>{product.name}</h1>
-        <button onClick={deactivate} style={{ background: "none", border: "1px solid #e8b4ae", color: "#c0392b", borderRadius: 6, padding: "7px 14px", fontSize: 13, cursor: "pointer" }}>
-          Deactivate
-        </button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {deleteError && <span style={{ color: "#c0392b", fontSize: 12 }}>{deleteError}</span>}
+          <button onClick={deactivate} style={{ background: "none", border: "1px solid #e8b4ae", color: "#c0392b", borderRadius: 6, padding: "7px 14px", fontSize: 13, cursor: "pointer" }}>
+            Deactivate
+          </button>
+          <button
+            onClick={deletePermanently}
+            disabled={deleting}
+            title="Permanently delete — cannot be undone"
+            style={{ background: "#c0392b", border: "1px solid #c0392b", color: "#fff", borderRadius: 6, padding: "7px 14px", fontSize: 13, cursor: deleting ? "wait" : "pointer" }}
+          >
+            {deleting ? "Deleting…" : "Delete permanently"}
+          </button>
+        </div>
       </div>
 
       <Section title="Details">

@@ -185,12 +185,33 @@ def update_product(product_id: str, payload: ProductUpdateIn, db: Session = Depe
 
 @router.delete("/products/{product_id}")
 def deactivate_product(product_id: str, db: Session = Depends(get_db)):
-    """Soft delete — is_active = false. Never a hard delete: order_items
-    references products, and past orders must survive."""
+    """Soft delete — is_active = false. The default action: hides the
+    product from the storefront while keeping it (and its order history)
+    fully intact and editable. For an irreversible hard delete, see
+    DELETE /products/{id}/permanent below."""
     p = db.query(Product).filter(Product.id == _uid(product_id)).first()
     if not p:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Product not found.")
     p.is_active = False
+    db.commit()
+    return {"ok": True}
+
+
+@router.delete("/products/{product_id}/permanent")
+async def delete_product_permanently(product_id: str, db: Session = Depends(get_db)):
+    """True hard delete — irreversible. Safe even for a product with order
+    history: order_items.product_id is ON DELETE SET NULL, and every field
+    an order actually displays (product name, sku, price, image url) is
+    already snapshotted directly on order_items — nothing there depends on
+    this row surviving. Options/values/variants/images cascade-delete at
+    the DB level; the Storage *files* don't, so those are cleaned up here
+    first to avoid orphaning them."""
+    p = db.query(Product).options(selectinload(Product.images)).filter(Product.id == _uid(product_id)).first()
+    if not p:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Product not found.")
+    for img in p.images:
+        await delete_product_image(img.storage_path)
+    db.delete(p)
     db.commit()
     return {"ok": True}
 

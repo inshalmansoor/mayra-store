@@ -59,6 +59,12 @@ export async function adminDeactivateProduct(id: string): Promise<{ ok: true }> 
   return api.delete(`/api/admin/products/${id}`);
 }
 
+/** Irreversible. Past orders keep their own snapshot of this product and
+ * are unaffected — only the editable catalogue row and its photos go. */
+export async function adminDeleteProductPermanently(id: string): Promise<{ ok: true }> {
+  return api.delete(`/api/admin/products/${id}/permanent`);
+}
+
 export interface OptionValueInput {
   valueId: string;
   label: string;
