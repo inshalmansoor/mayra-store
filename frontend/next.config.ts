@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
     // SVG-can-carry-a-script risk doesn't apply here.
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Upload paths carry a fresh UUID per photo, so the optimizer's cached
+    // derivative is valid indefinitely too — no need to re-optimize on a
+    // cold edge just because a year has passed.
+    minimumCacheTTL: 31536000,
   },
 };
 

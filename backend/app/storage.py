@@ -46,6 +46,18 @@ async def upload_product_image(product_id: str, file: UploadFile) -> tuple[str, 
                 "apikey": settings.SUPABASE_SERVICE_ROLE_KEY,
                 "Content-Type": file.content_type,
                 "x-upsert": "false",
+                # The path is {product_id}/{uuid4}.{ext} — a fresh UUID every
+                # upload, so the bytes at a given URL can never change.
+                # Replacing a photo produces a new URL, not a mutation of
+                # this one. That's exactly the condition "immutable" is for.
+                #
+                # Must be the full Cache-Control syntax, not a bare seconds
+                # count — Supabase stores whatever string it's given and
+                # serves it back verbatim; a bare number like "31536000" is
+                # stored as-is but isn't a valid Cache-Control value, so it
+                # gets served as "no-cache" instead. Confirmed empirically
+                # against this project on 2026-08-17.
+                "cache-control": "public, max-age=31536000, immutable",
             },
         )
     if r.status_code not in (200, 201):
