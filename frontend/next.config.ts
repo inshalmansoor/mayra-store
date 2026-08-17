@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "*.supabase.co" },
     ],
+    // Only for our own /public/placeholder.svg (the missing-image fallback
+    // in lib/variants.ts) — never for uploaded/remote content, so the usual
+    // SVG-can-carry-a-script risk doesn't apply here.
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 };
 

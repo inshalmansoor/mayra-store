@@ -9,14 +9,22 @@
 
 import type { OptionValue, Product, ProductOption, Selection, ValueState, Variant } from "./types";
 
+// Products can briefly have zero images while being set up in admin (or a
+// colour with no images of its own). Falling through to an empty string
+// isn't safe — next/image throws/warns on src="" and would download the
+// whole page again trying to resolve it — so every path here always
+// resolves to a real, renderable image.
+const PLACEHOLDER = "/placeholder.svg";
+
 export function coverImage(p: Product, colourId: string | null | undefined, w = 500): string {
   const set = colourId && p.images[colourId]?.length ? p.images[colourId] : p.images.default;
-  return withWidth((set ?? [])[0] ?? "", w);
+  return withWidth((set ?? [])[0] ?? PLACEHOLDER, w);
 }
 
 export function galleryImages(p: Product, colourId: string | null | undefined, w = 1000): string[] {
   const set = colourId && p.images[colourId]?.length ? p.images[colourId] : p.images.default;
-  return (set ?? []).map((url) => withWidth(url, w));
+  const urls = (set ?? []).map((url) => withWidth(url, w));
+  return urls.length ? urls : [PLACEHOLDER];
 }
 
 function withWidth(url: string, w: number): string {
