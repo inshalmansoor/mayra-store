@@ -19,6 +19,24 @@ import { EMPTY_AI_DRAFT } from "@/lib/ai-types";
 const CATEGORIES = ["necklaces", "bracelets", "rings", "earrings"];
 const MATERIALS = ["18k gold-plated stainless steel"];
 
+// The free-tier model this runs on has been measured taking 20-50s+ per
+// turn — static "Thinking…" text reads as broken over a wait that long.
+// A live counter is the difference between "is this stuck?" and "it's
+// working, just slow."
+function useElapsedSeconds(active: boolean): number {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    if (!active) {
+      setSeconds(0);
+      return;
+    }
+    const start = Date.now();
+    const id = setInterval(() => setSeconds(Math.floor((Date.now() - start) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [active]);
+  return seconds;
+}
+
 // Position-order join by '|', or the literal 'default' with no options — the
 // SAME rule as variantKey() in lib/variants.ts. The AI agent never computes
 // this itself (plans/09 §6); this is the one place the join happens for a
@@ -100,6 +118,8 @@ function AiAssistFlow({ onBack }: { onBack: () => void }) {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const started = chat.length > 0;
+  const startingSeconds = useElapsedSeconds(starting);
+  const thinkingSeconds = useElapsedSeconds(thinking);
 
   function pickFile(f: File | null) {
     setFile(f);
@@ -245,8 +265,13 @@ function AiAssistFlow({ onBack }: { onBack: () => void }) {
             disabled={starting || !file}
             style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 6, padding: "10px 16px", fontSize: 14, cursor: starting ? "wait" : "pointer" }}
           >
-            {starting ? "Looking at the photo…" : "Start"}
+            {starting ? `Looking at the photo… (${startingSeconds}s)` : "Start"}
           </button>
+          {starting && (
+            <p style={{ fontSize: 12, color: "#8a8f99" }}>
+              This can take up to a minute — the free-tier AI is slow right now. It is working; no need to retry.
+            </p>
+          )}
         </div>
       </div>
     );
@@ -273,7 +298,11 @@ function AiAssistFlow({ onBack }: { onBack: () => void }) {
               </div>
             </div>
           ))}
-          {thinking && <div style={{ fontSize: 12, color: "#8a8f99" }}>Thinking…</div>}
+          {thinking && (
+            <div style={{ fontSize: 12, color: "#8a8f99" }}>
+              Thinking… ({thinkingSeconds}s) — can take up to a minute on the free tier, it hasn&rsquo;t stalled.
+            </div>
+          )}
         </div>
 
         {pendingQuestions.length > 0 && (
@@ -293,11 +322,12 @@ function AiAssistFlow({ onBack }: { onBack: () => void }) {
               value={reply}
               onChange={(e) => setReply(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendReply()}
+              disabled={thinking}
               placeholder="Answer, or say “you decide”…"
-              style={{ flex: 1, padding: "9px 11px", borderRadius: 6, border: "1px solid #d0d3d9", fontSize: 14 }}
+              style={{ flex: 1, padding: "9px 11px", borderRadius: 6, border: "1px solid #d0d3d9", fontSize: 14, opacity: thinking ? 0.6 : 1 }}
             />
             <button onClick={sendReply} disabled={thinking || !reply.trim()} style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 6, padding: "9px 16px", fontSize: 13, cursor: thinking ? "wait" : "pointer" }}>
-              Send
+              {thinking ? `Thinking… (${thinkingSeconds}s)` : "Send"}
             </button>
           </div>
         )}

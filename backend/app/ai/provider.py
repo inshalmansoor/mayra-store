@@ -5,6 +5,7 @@ adding a branch here, nowhere else. Deliberately not using the claude-api
 tooling conventions in this repo's own dev environment — Gemini here is a
 user-chosen, non-Anthropic path, picked for its free tier.
 """
+import asyncio
 import base64
 import json
 
@@ -14,12 +15,26 @@ from fastapi import HTTPException, status
 from ..config import settings
 from .schema import AGENT_TURN_RESPONSE_SCHEMA
 
-GEMINI_TIMEOUT = 26.0  # seconds — vercel.json caps the function at 30; a
-# real delegation turn (asking Gemini to apply several defaults in one
-# response) was observed taking a little over 20s, so a tighter client-side
-# timeout was cutting off requests that Vercel's own limit would have let
-# finish. 26s leaves a few seconds of headroom for the surrounding request
-# handling, not more.
+# gemini-3.6-flash is, empirically, slow and occasionally overloaded on this
+# account: five real measured calls came back in 22-52s, one of them a 503
+# "high demand" from Google's own servers. gemini-2.5-flash (which would
+# otherwise be the obvious lower-latency choice) returns 404 "no longer
+# available to new users" — 3.6 is the only Flash-tier model this key can
+# reach at all, so the timeout has to be sized around ITS real behavior,
+# not an assumption. vercel.json's maxDuration is raised to 60s to match.
+GEMINI_TIMEOUT = 55.0
+
+# Cuts thoughtsTokenCount from ~1300 to ~0 in testing (roughly halves total
+# token usage) without a measurable effect on wall-clock latency — the slow
+# part is elsewhere. thinkingBudget: 0 (fully off) returns 400 INVALID_ARGUMENT
+# on this model, so a small non-zero floor is what it actually accepts.
+THINKING_BUDGET = 512
+
+# "This model is currently experiencing high demand... usually temporary" is
+# Google's own wording for this — worth exactly one automatic retry before
+# giving up and telling the admin to try again manually.
+RETRY_ON_STATUS = {503}
+RETRY_DELAY_SECONDS = 2.0
 
 
 class ProviderError(Exception):
@@ -49,12 +64,16 @@ async def generate_turn(
         "generationConfig": {
             "responseMimeType": "application/json",
             "responseSchema": AGENT_TURN_RESPONSE_SCHEMA,
+            "thinkingConfig": {"thinkingBudget": THINKING_BUDGET},
         },
     }
 
     try:
         async with httpx.AsyncClient(timeout=GEMINI_TIMEOUT) as client:
             r = await client.post(url, params={"key": settings.GEMINI_API_KEY}, json=body)
+            if r.status_code in RETRY_ON_STATUS:
+                await asyncio.sleep(RETRY_DELAY_SECONDS)
+                r = await client.post(url, params={"key": settings.GEMINI_API_KEY}, json=body)
     except httpx.TimeoutException:
         raise ProviderError("The AI took too long to respond.")
     except httpx.HTTPError as e:
@@ -62,6 +81,8 @@ async def generate_turn(
 
     if r.status_code == 429:
         raise ProviderError("rate_limited")
+    if r.status_code == 503:
+        raise ProviderError("overloaded")
     if r.status_code != 200:
         raise ProviderError(f"AI provider returned {r.status_code}: {r.text[:300]}")
 
@@ -91,5 +112,10 @@ def to_http_exception(err: ProviderError) -> HTTPException:
     if str(err) == "rate_limited":
         return HTTPException(
             status.HTTP_429_TOO_MANY_REQUESTS, "AI assist is rate-limited right now — try again in a minute, or fill in the form manually."
+        )
+    if str(err) == "overloaded":
+        return HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "The AI provider is at capacity right now (already retried once) — try again shortly, or fill in the form manually.",
         )
     return HTTPException(status.HTTP_502_BAD_GATEWAY, f"AI assist isn't available right now — fill in the form manually. ({err})")
