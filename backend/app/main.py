@@ -15,7 +15,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .config import settings
 from .db import get_db
-from .routers import admin, orders, public
+from .routers import admin, ai, orders, public
 
 logging.basicConfig(level=logging.INFO)
 
@@ -70,3 +70,4 @@ app.include_router(public.router)
 app.include_router(orders.router)
 app.include_router(admin.auth_router)
 app.include_router(admin.router)
+app.include_router(ai.router)

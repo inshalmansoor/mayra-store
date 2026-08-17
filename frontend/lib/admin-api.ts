@@ -11,6 +11,7 @@ import type {
   AdminShippingRate,
   AdminVariant,
 } from "./admin-types";
+import type { AiProductDraft, AiQuestion, AiTurnResult } from "./ai-types";
 
 export async function adminLogin(password: string): Promise<{ ok: true }> {
   return api.post("/api/admin/login", { password });
@@ -180,4 +181,36 @@ export async function adminUpdateShippingRate(
 
 export async function adminDeactivateShippingRate(id: string): Promise<{ ok: true }> {
   return api.delete(`/api/admin/shipping-rates/${id}`);
+}
+
+// --------------------------------------------------------------------- AI agent
+export async function adminAiStatus(): Promise<{ enabled: boolean }> {
+  return api.getNoStore("/api/admin/ai/status");
+}
+
+export async function adminAiCollections(): Promise<string[]> {
+  return api.getNoStore("/api/admin/ai/collections");
+}
+
+export async function adminAiStartDraft(file: File, description: string): Promise<AiTurnResult> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("description", description);
+  return apiUpload("/api/admin/ai/draft-product/start", form);
+}
+
+export interface AiContinueInput {
+  visualFacts: string;
+  draft: AiProductDraft;
+  pendingQuestions: AiQuestion[];
+  answer: string;
+  turnCount: number;
+}
+
+export async function adminAiContinueDraft(payload: AiContinueInput): Promise<AiTurnResult> {
+  return api.post("/api/admin/ai/draft-product/continue", payload);
+}
+
+export async function adminAiRegenerateCopy(productId: string): Promise<AiTurnResult> {
+  return api.post(`/api/admin/ai/regenerate-copy/${productId}`);
 }

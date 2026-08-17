@@ -55,6 +55,14 @@ class Settings(BaseSettings):
     BANK_ACCOUNT_NUMBER: str = ""
     BANK_IBAN: str = ""
 
+    # --- AI product agent — plans/09 §10. Kill switch defaults to off so a
+    # missing key never breaks the (always-available) manual form. ---------
+    AI_ENABLED: bool = False
+    AI_PROVIDER: str = "gemini"
+    AI_MODEL: str = "gemini-2.0-flash"
+    AI_MAX_TURNS: int = 8
+    GEMINI_API_KEY: str = ""
+
     @property
     def origins(self) -> list[str]:
         return [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]

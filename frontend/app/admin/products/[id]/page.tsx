@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { adminDeactivateProduct, adminGetProduct, adminUpdateProduct } from "@/lib/admin-api";
+import { adminAiRegenerateCopy, adminAiStatus, adminDeactivateProduct, adminGetProduct, adminUpdateProduct } from "@/lib/admin-api";
 import type { AdminProduct } from "@/lib/admin-types";
+import type { AiSuggestion } from "@/lib/ai-types";
 import { ApiError } from "@/lib/api";
 import VariantsEditor from "@/components/admin/VariantsEditor";
 import ImagesEditor from "@/components/admin/ImagesEditor";
@@ -108,9 +109,75 @@ function DetailsForm({ product, onSave, saving }: { product: AdminProduct; onSav
   const [care, setCare] = useState(product.care.join("\n"));
   const [isFeatured, setIsFeatured] = useState(product.isFeatured);
 
+  const [aiAvailable, setAiAvailable] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenError, setRegenError] = useState<string | null>(null);
+  const [copySuggestions, setCopySuggestions] = useState<AiSuggestion[]>([]);
+  const [copyDraft, setCopyDraft] = useState<{ name: string | null; blurb: string | null; alt: string | null } | null>(null);
+
+  useEffect(() => {
+    adminAiStatus().then((s) => setAiAvailable(s.enabled)).catch(() => setAiAvailable(false));
+  }, []);
+
+  async function regenerateCopy() {
+    setRegenerating(true);
+    setRegenError(null);
+    try {
+      const out = await adminAiRegenerateCopy(product.id);
+      setCopyDraft({ name: out.draft.name, blurb: out.draft.blurb, alt: out.draft.alt });
+      setCopySuggestions(out.suggestions);
+    } catch (e) {
+      setRegenError(e instanceof ApiError ? e.message2 : "Could not reach the AI.");
+    } finally {
+      setRegenerating(false);
+    }
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <Field label={`Slug (permanent): ${product.slug}`} />
+
+      {aiAvailable && (
+        <div style={{ background: "#f4f5f7", borderRadius: 8, padding: 12 }}>
+          <button
+            onClick={regenerateCopy}
+            disabled={regenerating}
+            style={{ background: "#fff", border: "1px solid #d0d3d9", borderRadius: 6, padding: "7px 14px", fontSize: 12, cursor: regenerating ? "wait" : "pointer" }}
+          >
+            {regenerating ? "Thinking…" : "Regenerate copy with AI"}
+          </button>
+          <p style={{ fontSize: 11, color: "#8a8f99", margin: "6px 0 0" }}>
+            Only touches name, blurb and image alt text — never price, stock, material, or structure.
+          </p>
+          {regenError && <p style={{ color: "#c0392b", fontSize: 12, marginTop: 6 }}>{regenError}</p>}
+          {copyDraft && (
+            <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+              {copyDraft.name && (
+                <CopySuggestionRow
+                  label="Name"
+                  value={copyDraft.name}
+                  reason={copySuggestions.find((s) => s.field === "name")?.reason}
+                  onApply={() => setName(copyDraft.name!)}
+                />
+              )}
+              {copyDraft.blurb && (
+                <CopySuggestionRow
+                  label="Blurb"
+                  value={copyDraft.blurb}
+                  reason={copySuggestions.find((s) => s.field === "blurb")?.reason}
+                  onApply={() => setBlurb(copyDraft.blurb!)}
+                />
+              )}
+              {copyDraft.alt && (
+                <div style={{ fontSize: 12 }}>
+                  <strong>Alt text suggestion</strong> (apply manually in Images below): {copyDraft.alt}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       <LabeledInput label="Name" value={name} onChange={setName} />
       <div>
         <label style={labelStyle}>Category</label>
@@ -173,4 +240,20 @@ function LabeledInput({ label, value, onChange, type = "text" }: { label: string
 
 function Field({ label }: { label: string }) {
   return <p style={{ fontSize: 12, color: "#8a8f99", margin: 0 }}>{label}</p>;
+}
+
+function CopySuggestionRow({ label, value, reason, onApply }: { label: string; value: string; reason?: string; onApply: () => void }) {
+  return (
+    <div style={{ fontSize: 12, background: "#fff", borderRadius: 6, padding: 8 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+        <div>
+          <strong>{label}:</strong> {value}
+          {reason && <div style={{ color: "#8a8f99", marginTop: 2 }}>{reason}</div>}
+        </div>
+        <button onClick={onApply} style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer", flexShrink: 0 }}>
+          Use this
+        </button>
+      </div>
+    </div>
+  );
 }
