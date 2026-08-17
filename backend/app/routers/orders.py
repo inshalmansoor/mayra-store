@@ -18,6 +18,7 @@ from ..email.sender import send_order_emails
 from ..models import Order, OrderItem, Product, ProductVariant, order_number_seq
 from ..pricing import PricedLine, compute_totals, selection_label_for_variant, unit_price_for_variant
 from ..schemas import OrderCreateIn, OrderLineOut, OrderOut, OrderProblem
+from ..shipping import get_shipping_rule, resolve_rate_for_order, shipping_label_for
 
 log = logging.getLogger("mayra.orders")
 
@@ -42,6 +43,12 @@ def _first_product_image(product: Product) -> str | None:
 def create_order(payload: OrderCreateIn, db: Session = Depends(get_db)):
     if not payload.items:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Your bag is empty.")
+
+    # Resolved before touching inventory locks — a bad/stale shipping choice
+    # should fail fast, not after rows are already locked. The server never
+    # trusts payload.shipping_rate_id itself; see plans/09 §20.
+    shipping_rule = get_shipping_rule(db)
+    shipping_rate = resolve_rate_for_order(db, payload.shipping_rate_id, shipping_rule)
 
     slugs = {item.product_slug for item in payload.items}
 
@@ -98,7 +105,7 @@ def create_order(payload: OrderCreateIn, db: Session = Depends(get_db)):
             PricedLine(product=product, variant=variant, selection_label=label, unit_price=unit_price, qty=qty)
         )
 
-    totals = compute_totals(priced_lines, payload.discount_code)
+    totals = compute_totals(priced_lines, payload.discount_code, shipping_rate, shipping_rule)
 
     # Decrement stock, track anything that crosses the low-stock line for the owner email.
     low_stock_lines: list[str] = []
@@ -126,6 +133,8 @@ def create_order(payload: OrderCreateIn, db: Session = Depends(get_db)):
         discount_code=payload.discount_code if totals.discount_amount else None,
         discount_amount=totals.discount_amount,
         delivery_fee=totals.delivery_fee,
+        shipping_rate_id=shipping_rate.id,
+        shipping_label=shipping_label_for(shipping_rate),
         total=totals.total,
         email_status="pending",
     )
@@ -170,6 +179,7 @@ def create_order(payload: OrderCreateIn, db: Session = Depends(get_db)):
         subtotal=order.subtotal,
         discount_amount=order.discount_amount,
         delivery_fee=order.delivery_fee,
+        shipping_label=order.shipping_label,
         total=order.total,
         payment_method=order.payment_method,
         payment_status=order.payment_status,

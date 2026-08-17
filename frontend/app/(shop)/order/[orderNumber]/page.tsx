@@ -68,7 +68,7 @@ export default function OrderConfirmationPage() {
           <div style={{ textAlign: "left", borderTop: "1px solid var(--line)", paddingTop: 14, marginBottom: 28 }}>
             <Row label="Subtotal" value={fmt(order.subtotal)} />
             {order.discountAmount > 0 && <Row label="Discount" value={"−" + fmt(order.discountAmount)} />}
-            <Row label="Delivery" value={order.deliveryFee === 0 ? "Free" : fmt(order.deliveryFee)} />
+            <Row label={order.shippingLabel ? `Delivery (${order.shippingLabel})` : "Delivery"} value={order.deliveryFee === 0 ? "Free" : fmt(order.deliveryFee)} />
             <Row label="Total" value={fmt(order.total)} big />
           </div>
 

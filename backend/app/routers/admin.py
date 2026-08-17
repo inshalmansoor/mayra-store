@@ -26,6 +26,7 @@ from ..models import (
     ProductOptionValue,
     ProductVariant,
     Setting,
+    ShippingRate,
 )
 from ..schemas import (
     AdminLoginIn,
@@ -33,6 +34,8 @@ from ..schemas import (
     OrderStatusUpdateIn,
     ProductCreateIn,
     ProductUpdateIn,
+    ShippingRateCreateIn,
+    ShippingRateUpdateIn,
     SettingUpdateIn,
     VariantCreateIn,
     VariantUpdateIn,
@@ -398,6 +401,7 @@ def _order_dict(o: Order) -> dict:
         "discountCode": o.discount_code,
         "discountAmount": o.discount_amount,
         "deliveryFee": o.delivery_fee,
+        "shippingLabel": o.shipping_label,
         "total": o.total,
         "emailStatus": o.email_status,
         "emailError": o.email_error,
@@ -477,6 +481,106 @@ def list_notify_requests(db: Session = Depends(get_db)):
 def get_settings_admin(db: Session = Depends(get_db)):
     rows = db.query(Setting).all()
     return {r.key: r.value for r in rows}
+
+
+# -------------------------------------------------------------------- shipping
+# Guardrails (plans/09 §21): at least one active rate must always exist,
+# exactly one active rate is the default, and the default can never be
+# deactivated without another being promoted first — is_default is not just
+# the checkout pre-selection, it's the ONLY rate charged when
+# shipping_multiple_rates_enabled is off.
+def _shipping_rate_dict(r: ShippingRate) -> dict:
+    return {
+        "id": str(r.id),
+        "label": r.label,
+        "deliveryEstimate": r.delivery_estimate,
+        "fee": r.fee,
+        "isActive": r.is_active,
+        "isDefault": r.is_default,
+        "freeShippingEligible": r.free_shipping_eligible,
+        "sortOrder": r.sort_order,
+    }
+
+
+def _guard_deactivation(db: Session, r: ShippingRate) -> None:
+    if r.is_default:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "This is the default rate — set another rate as default before deactivating it.",
+        )
+    active_count = db.query(ShippingRate).filter(ShippingRate.is_active.is_(True)).count()
+    if active_count <= 1:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "At least one active shipping rate must exist.")
+
+
+@router.get("/shipping-rates")
+def list_shipping_rates(db: Session = Depends(get_db)):
+    rates = db.query(ShippingRate).order_by(ShippingRate.sort_order).all()
+    return [_shipping_rate_dict(r) for r in rates]
+
+
+@router.post("/shipping-rates", status_code=status.HTTP_201_CREATED)
+def create_shipping_rate(payload: ShippingRateCreateIn, db: Session = Depends(get_db)):
+    # The very first rate ever created must be active and default — there is
+    # never a moment with a rate list but no default.
+    is_first = db.query(ShippingRate).count() == 0
+    make_default = payload.is_default or is_first
+    if make_default:
+        db.query(ShippingRate).filter(ShippingRate.is_default.is_(True)).update({"is_default": False})
+    r = ShippingRate(
+        label=payload.label,
+        delivery_estimate=payload.delivery_estimate,
+        fee=payload.fee,
+        is_active=True,
+        is_default=make_default,
+        free_shipping_eligible=payload.free_shipping_eligible,
+        sort_order=payload.sort_order,
+    )
+    db.add(r)
+    db.commit()
+    db.refresh(r)
+    return _shipping_rate_dict(r)
+
+
+@router.patch("/shipping-rates/{rate_id}")
+def update_shipping_rate(rate_id: str, payload: ShippingRateUpdateIn, db: Session = Depends(get_db)):
+    r = db.query(ShippingRate).filter(ShippingRate.id == _uid(rate_id)).first()
+    if not r:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Shipping rate not found.")
+    updates = payload.model_dump(exclude_unset=True)
+
+    if updates.get("is_active") is False and r.is_active:
+        _guard_deactivation(db, r)
+    if updates.get("is_default") is False and r.is_default:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Every rate list needs a default — set another rate as default instead of clearing this one.",
+        )
+    if updates.get("is_default") is True and not r.is_default:
+        db.query(ShippingRate).filter(ShippingRate.id != r.id, ShippingRate.is_default.is_(True)).update(
+            {"is_default": False}
+        )
+
+    for field, value in updates.items():
+        setattr(r, field, value)
+    db.commit()
+    db.refresh(r)
+    return _shipping_rate_dict(r)
+
+
+@router.delete("/shipping-rates/{rate_id}")
+def deactivate_shipping_rate(rate_id: str, db: Session = Depends(get_db)):
+    """Soft delete only — orders.shipping_rate_id references this row and
+    past orders must survive, the same reason deactivate_product never hard-
+    deletes."""
+    r = db.query(ShippingRate).filter(ShippingRate.id == _uid(rate_id)).first()
+    if not r:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Shipping rate not found.")
+    if r.is_active:
+        _guard_deactivation(db, r)
+        r.is_active = False
+        db.commit()
+    return {"ok": True}
 
 
 @router.patch("/settings/{key}")

@@ -141,6 +141,26 @@ class ProductImage(Base):
     product: Mapped["Product"] = relationship(back_populates="images")
 
 
+# ----------------------------------------------------------------- shipping
+class ShippingRate(Base):
+    """One row per shipping tier the owner offers. See plans/09 §15-22 —
+    is_default is the rate charged when shipping_multiple_rates_enabled is
+    off, not just the checkout pre-selection."""
+
+    __tablename__ = "shipping_rates"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    label: Mapped[str] = mapped_column(String, nullable=False)
+    delivery_estimate: Mapped[str] = mapped_column(String, nullable=False, default="")
+    fee: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    free_shipping_eligible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    __table_args__ = (CheckConstraint("fee >= 0", name="ck_shipping_rates_fee"),)
+
+
 # ------------------------------------------------------------------------ orders
 order_number_seq = Sequence("order_number_seq", start=1001)
 
@@ -167,6 +187,10 @@ class Order(Base):
     discount_code: Mapped[str | None] = mapped_column(String, nullable=True)
     discount_amount: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     delivery_fee: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    shipping_rate_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("shipping_rates.id", ondelete="SET NULL"), nullable=True
+    )
+    shipping_label: Mapped[str] = mapped_column(String, nullable=False, default="")
     total: Mapped[int] = mapped_column(Integer, nullable=False)
 
     email_status: Mapped[str] = mapped_column(String, nullable=False, default="pending")

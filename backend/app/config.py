@@ -43,8 +43,8 @@ class Settings(BaseSettings):
     STORE_CURRENCY: str = "PKR"
     WHATSAPP_NUMBER: str
     INSTAGRAM_URL: str
-    FREE_DELIVERY_THRESHOLD: int = 5000
-    DELIVERY_FEE: int = 250
+    # Delivery fee/threshold moved to the shipping_rates table + Settings
+    # (shipping_free_threshold) — plans/09 §15-17. No longer read from env.
     LOW_STOCK_AT: int = 3
     DISCOUNT_CODE: str = "MAYRA20"
     DISCOUNT_PERCENT: int = 20

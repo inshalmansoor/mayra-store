@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useProducts } from "@/lib/useProducts";
-import { buildCartLines, lineImage } from "@/lib/pricing";
+import { useSettings } from "@/lib/useSettings";
+import { buildCartLines, lineImage, resolveDeliveryFee, resolveShippingRate } from "@/lib/pricing";
 import { fmt } from "@/lib/format";
 import { buildOrderWhatsAppUrl } from "@/lib/whatsapp";
 import { cartKeyFor } from "@/lib/variants";
@@ -17,6 +18,7 @@ import { useToast } from "@/context/ToastContext";
 export default function CartPage() {
   const { cart, hydrated, changeQty, removeLine, reconcile } = useCart();
   const { products, loading } = useProducts();
+  const { settings } = useSettings();
   const { pushToast } = useToast();
   const router = useRouter();
   const [reconciled, setReconciled] = useState(false);
@@ -58,6 +60,22 @@ export default function CartPage() {
   const subtotal = lines.reduce((s, l) => s + (l.available ? l.lineTotalRaw : 0), 0);
   const hasUnavailable = lines.some((l) => !l.available);
   const whatsappUrl = buildOrderWhatsAppUrl(lines, fmt(subtotal));
+
+  // No shipping choice has been made yet here — show what the default rate
+  // would cost, same resolution the checkout page falls back to. See
+  // plans/09 §21.
+  const shippingSettings = {
+    shippingMultipleRatesEnabled: settings?.shippingMultipleRatesEnabled ?? false,
+    shippingRates: settings?.shippingRates ?? [],
+  };
+  const defaultRate = resolveShippingRate(shippingSettings, null);
+  const deliveryNow = resolveDeliveryFee(defaultRate, subtotal, subtotal, {
+    shippingFreeAll: settings?.shippingFreeAll ?? false,
+    shippingFreeThreshold: settings?.shippingFreeThreshold ?? 0,
+  });
+  const threshold = settings?.shippingFreeThreshold ?? 0;
+  const eligible = defaultRate?.freeShippingEligible ?? false;
+  const remainingForFree = threshold > 0 && eligible ? Math.max(0, threshold - subtotal) : 0;
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "24px 20px 60px" }}>
@@ -117,9 +135,15 @@ export default function CartPage() {
           <span>Subtotal</span>
           <span>{fmt(subtotal)}</span>
         </div>
-        {subtotal > 0 && subtotal < 5000 && (
+        {subtotal > 0 && defaultRate && (
+          <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--font-body)", fontSize: 14, color: "var(--ink-soft)", marginTop: 4 }}>
+            <span>Delivery ({defaultRate.label})</span>
+            <span>{deliveryNow === 0 ? "Free" : fmt(deliveryNow)}</span>
+          </div>
+        )}
+        {remainingForFree > 0 && subtotal > 0 && (
           <p style={{ fontFamily: "var(--font-caps)", fontSize: 12, color: "var(--ink-soft)", marginTop: 6 }}>
-            {fmt(5000 - subtotal)} more for free delivery
+            {fmt(remainingForFree)} more for free delivery
           </p>
         )}
       </div>

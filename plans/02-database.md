@@ -118,6 +118,21 @@ create table product_images (
 );
 create index on product_images (product_id);
 
+-- ------------------------------------------------------------------ shipping
+-- One row per shipping tier the owner offers — see plans/09 §15-22 for the
+-- full design (master on/off switch, free-shipping rules, guardrails).
+create table shipping_rates (
+  id                      uuid primary key default gen_random_uuid(),
+  label                   text not null,                 -- 'Standard', 'Express'
+  delivery_estimate       text not null default '',       -- '3-4 days', 'next day'
+  fee                     int  not null default 0 check (fee >= 0),
+  is_active               boolean not null default true,  -- soft delete — orders reference this row
+  is_default              boolean not null default false, -- pre-selected; the ONLY rate charged when multi-rate mode is off
+  free_shipping_eligible  boolean not null default true,   -- may the free-shipping switches zero this tier?
+  sort_order              int  not null default 0
+);
+create index on shipping_rates (is_active);
+
 -- ------------------------------------------------------------------- orders
 create sequence order_number_seq start 1001;
 
@@ -138,11 +153,13 @@ create table orders (
                   check (status in ('new','confirmed','packed','shipped','delivered','cancelled')),
 
   -- all server-computed; the browser's numbers are never written here
-  subtotal        int not null,
-  discount_code   text,
-  discount_amount int not null default 0,
-  delivery_fee    int not null default 0,
-  total           int not null,
+  subtotal          int not null,
+  discount_code     text,
+  discount_amount   int not null default 0,
+  delivery_fee      int not null default 0,
+  shipping_rate_id  uuid references shipping_rates(id) on delete set null,  -- provenance
+  shipping_label    text not null default '',   -- snapshot, e.g. 'Express · next day' — survives rate rename/deactivation, see plans/09 §17
+  total             int not null,
 
   email_status    text not null default 'pending'
                   check (email_status in ('pending','sent','partial','failed')),
@@ -199,8 +216,19 @@ insert into settings (key, value) values
   ('announcement_text', 'Launch offer — 20% off everything with code MAYRA20'),
   ('announcement_enabled', 'true'),
   ('promo_popup_enabled', 'true'),
-  ('about_intro', '')
+  ('about_intro', ''),
+  -- Shipping — see plans/09 §16. Seeded to reproduce pre-migration behaviour
+  -- exactly (single flat rate, free over Rs 5000) so this ships dark.
+  ('shipping_multiple_rates_enabled', 'false'),
+  ('shipping_free_all', 'false'),
+  ('shipping_free_threshold', '5000')
 on conflict (key) do nothing;
+
+-- Seed one default rate carrying the values the app used to read from
+-- FREE_DELIVERY_THRESHOLD/DELIVERY_FEE env vars, one time only.
+insert into shipping_rates (label, delivery_estimate, fee, is_active, is_default, free_shipping_eligible, sort_order)
+select 'Standard', '', 250, true, true, true, 0
+where not exists (select 1 from shipping_rates);
 
 -- updated_at maintenance
 create or replace function touch_updated_at() returns trigger
@@ -228,6 +256,7 @@ alter table order_items            enable row level security;
 alter table notify_requests        enable row level security;
 alter table settings               enable row level security;
 alter table categories             enable row level security;
+alter table shipping_rates         enable row level security;
 -- No policies created. The service_role key bypasses RLS by design;
 -- the anon key now sees nothing at all.
 ```

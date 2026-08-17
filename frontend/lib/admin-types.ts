@@ -100,10 +100,24 @@ export interface AdminOrderDetail {
   discountCode: string | null;
   discountAmount: number;
   deliveryFee: number;
+  shippingLabel: string;
   total: number;
   emailStatus: string;
   emailError: string | null;
   items: AdminOrderItem[];
+}
+
+// Full admin shape — includes inactive rates and is_active, unlike the
+// public ShippingRate. See backend/app/routers/admin.py _shipping_rate_dict.
+export interface AdminShippingRate {
+  id: string;
+  label: string;
+  deliveryEstimate: string;
+  fee: number;
+  isActive: boolean;
+  isDefault: boolean;
+  freeShippingEligible: boolean;
+  sortOrder: number;
 }
 
 export interface AdminNotifyRequest {

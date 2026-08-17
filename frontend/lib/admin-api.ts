@@ -8,6 +8,7 @@ import type {
   AdminOrderDetail,
   AdminOrderList,
   AdminProduct,
+  AdminShippingRate,
   AdminVariant,
 } from "./admin-types";
 
@@ -151,4 +152,32 @@ export async function adminGetSettings(): Promise<Record<string, string>> {
 
 export async function adminUpdateSetting(key: string, value: string): Promise<{ key: string; value: string }> {
   return api.patch(`/api/admin/settings/${key}`, { value });
+}
+
+export async function adminListShippingRates(): Promise<AdminShippingRate[]> {
+  return api.getNoStore("/api/admin/shipping-rates");
+}
+
+export interface ShippingRateInput {
+  label: string;
+  deliveryEstimate?: string;
+  fee: number;
+  isDefault?: boolean;
+  freeShippingEligible?: boolean;
+  sortOrder?: number;
+}
+
+export async function adminCreateShippingRate(payload: ShippingRateInput): Promise<AdminShippingRate> {
+  return api.post("/api/admin/shipping-rates", payload);
+}
+
+export async function adminUpdateShippingRate(
+  id: string,
+  payload: Partial<ShippingRateInput & { isActive: boolean }>,
+): Promise<AdminShippingRate> {
+  return api.patch(`/api/admin/shipping-rates/${id}`, payload);
+}
+
+export async function adminDeactivateShippingRate(id: string): Promise<{ ok: true }> {
+  return api.delete(`/api/admin/shipping-rates/${id}`);
 }

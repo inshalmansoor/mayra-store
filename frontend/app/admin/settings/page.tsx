@@ -29,8 +29,9 @@ export default function AdminSettingsPage() {
     <div style={{ maxWidth: 560 }}>
       <h1 style={{ fontSize: 22, marginBottom: 20 }}>Settings</h1>
       <p style={{ fontSize: 13, color: "#8a8f99", marginBottom: 20 }}>
-        Discount code, delivery fees, WhatsApp number and bank details live in the server&rsquo;s .env file, not here —
-        they&rsquo;re rules the checkout enforces, not display text.
+        Discount code, WhatsApp number and bank details live in the server&rsquo;s .env file, not here — they&rsquo;re
+        rules the checkout enforces, not display text. Shipping rates and free-shipping rules have their own page —
+        see Shipping in the sidebar.
       </p>
       <div style={{ background: "#fff", border: "1px solid #e2e4e9", borderRadius: 8, padding: 18, display: "flex", flexDirection: "column", gap: 16 }}>
         {KEYS.map((k) => (

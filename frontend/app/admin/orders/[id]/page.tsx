@@ -120,7 +120,7 @@ export default function AdminOrderDetailPage() {
         <div style={{ borderTop: "1px solid #e2e4e9", marginTop: 10, paddingTop: 10, fontSize: 13 }}>
           <Row label="Subtotal" value={fmt(order.subtotal)} />
           {order.discountAmount > 0 && <Row label={`Discount${order.discountCode ? " (" + order.discountCode + ")" : ""}`} value={"−" + fmt(order.discountAmount)} />}
-          <Row label="Delivery" value={order.deliveryFee === 0 ? "Free" : fmt(order.deliveryFee)} />
+          <Row label={order.shippingLabel ? `Delivery (${order.shippingLabel})` : "Delivery"} value={order.deliveryFee === 0 ? "Free" : fmt(order.deliveryFee)} />
           <Row label="Total" value={fmt(order.total)} bold />
         </div>
       </section>

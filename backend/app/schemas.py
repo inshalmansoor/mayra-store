@@ -72,19 +72,32 @@ class AnnouncementOut(CamelModel):
     text: str
 
 
+class ShippingRateOut(CamelModel):
+    id: str
+    label: str
+    delivery_estimate: str
+    fee: int
+    is_default: bool
+    free_shipping_eligible: bool
+
+
 class SettingsOut(CamelModel):
     store_name: str
     currency: str
     whatsapp_number: str
     instagram_url: str
-    free_delivery_threshold: int
-    delivery_fee: int
     low_stock_at: int
     discount_code: str
     discount_percent: int
     bank: BankOut
     announcement: AnnouncementOut
     promo_popup_enabled: bool
+    # --- shipping — plans/09 §16, §19. Replaces the old flat
+    # free_delivery_threshold/delivery_fee env-sourced fields entirely. ---
+    shipping_multiple_rates_enabled: bool
+    shipping_free_all: bool
+    shipping_free_threshold: int
+    shipping_rates: list[ShippingRateOut]
 
 
 # --------------------------------------------------------------------- discount / notify
@@ -141,6 +154,9 @@ class OrderCreateIn(CamelModel):
     customer: CustomerIn
     payment_method: Literal["cod", "bank", "card"]
     discount_code: str | None = None
+    # Ignored server-side when shipping_multiple_rates_enabled is off — the
+    # default rate is charged regardless. See plans/09 §20.
+    shipping_rate_id: str | None = None
 
 
 # --------------------------------------------------------------------- orders (out)
@@ -159,6 +175,7 @@ class OrderOut(CamelModel):
     subtotal: int
     discount_amount: int
     delivery_fee: int
+    shipping_label: str
     total: int
     payment_method: str
     payment_status: str
@@ -243,3 +260,34 @@ class OrderStatusUpdateIn(CamelModel):
 
 class SettingUpdateIn(CamelModel):
     value: str
+
+
+# --------------------------------------------------------------------- shipping (admin)
+class ShippingRateCreateIn(CamelModel):
+    label: str = Field(min_length=1)
+    delivery_estimate: str = ""
+    fee: int = Field(ge=0)
+    is_default: bool = False
+    free_shipping_eligible: bool = True
+    sort_order: int = 0
+
+
+class ShippingRateUpdateIn(CamelModel):
+    label: str | None = Field(default=None, min_length=1)
+    delivery_estimate: str | None = None
+    fee: int | None = Field(default=None, ge=0)
+    is_active: bool | None = None
+    is_default: bool | None = None
+    free_shipping_eligible: bool | None = None
+    sort_order: int | None = None
+
+
+class AdminShippingRateOut(CamelModel):
+    id: str
+    label: str
+    delivery_estimate: str
+    fee: int
+    is_active: bool
+    is_default: bool
+    free_shipping_eligible: bool
+    sort_order: int

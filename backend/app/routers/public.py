@@ -17,8 +17,10 @@ from ..schemas import (
     NotifyMeIn,
     ProductOut,
     SettingsOut,
+    ShippingRateOut,
 )
 from ..serializers import serialize_product
+from ..shipping import get_active_rates, get_shipping_rule
 
 router = APIRouter(prefix="/api", tags=["public"])
 
@@ -63,13 +65,12 @@ def _setting(db: Session, key: str, default: str = "") -> str:
 
 @router.get("/settings", response_model=SettingsOut)
 def get_settings_endpoint(db: Session = Depends(get_db)):
+    rule = get_shipping_rule(db)
     return SettingsOut(
         store_name=settings.STORE_NAME,
         currency=settings.STORE_CURRENCY,
         whatsapp_number=settings.WHATSAPP_NUMBER,
         instagram_url=settings.INSTAGRAM_URL,
-        free_delivery_threshold=settings.FREE_DELIVERY_THRESHOLD,
-        delivery_fee=settings.DELIVERY_FEE,
         low_stock_at=settings.LOW_STOCK_AT,
         discount_code=settings.DISCOUNT_CODE,
         discount_percent=settings.DISCOUNT_PERCENT,
@@ -84,6 +85,20 @@ def get_settings_endpoint(db: Session = Depends(get_db)):
             text=_setting(db, "announcement_text", ""),
         ),
         promo_popup_enabled=_setting(db, "promo_popup_enabled", "true") == "true",
+        shipping_multiple_rates_enabled=rule.multiple_rates_enabled,
+        shipping_free_all=rule.free_all,
+        shipping_free_threshold=rule.free_threshold,
+        shipping_rates=[
+            ShippingRateOut(
+                id=str(r.id),
+                label=r.label,
+                delivery_estimate=r.delivery_estimate,
+                fee=r.fee,
+                is_default=r.is_default,
+                free_shipping_eligible=r.free_shipping_eligible,
+            )
+            for r in get_active_rates(db)
+        ],
     )
 
 

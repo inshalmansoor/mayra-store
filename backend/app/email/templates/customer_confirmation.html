@@ -34,7 +34,7 @@
   <tr><td style="font-family:Georgia,serif;font-size:14px;color:#6b6656;padding:4px 0;">Discount{% if order.discount_code %} ({{ order.discount_code }}){% endif %}</td>
       <td align="right" style="font-family:Georgia,serif;font-size:14px;color:#d67f48;padding:4px 0;">&minus;{{ fmt(order.discount_amount) }}</td></tr>
   {% endif %}
-  <tr><td style="font-family:Georgia,serif;font-size:14px;color:#6b6656;padding:4px 0;">Delivery</td>
+  <tr><td style="font-family:Georgia,serif;font-size:14px;color:#6b6656;padding:4px 0;">Delivery{% if order.shipping_label %} ({{ order.shipping_label }}){% endif %}</td>
       <td align="right" style="font-family:Georgia,serif;font-size:14px;color:#2e2b25;padding:4px 0;">{{ 'Free' if order.delivery_fee == 0 else fmt(order.delivery_fee) }}</td></tr>
   <tr><td style="font-family:Georgia,serif;font-size:17px;color:#2e2b25;padding:10px 0 0 0;font-weight:bold;">Total</td>
       <td align="right" style="font-family:Georgia,serif;font-size:17px;color:#2e2b25;padding:10px 0 0 0;font-weight:bold;">{{ fmt(order.total) }}</td></tr>

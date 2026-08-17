@@ -55,19 +55,33 @@ export interface Announcement {
   text: string;
 }
 
+// Mirrors backend/app/schemas.py ShippingRateOut — the public, active-only
+// shape. isDefault doubles as "the only rate charged when
+// shippingMultipleRatesEnabled is false" — see plans/09 §16-18.
+export interface ShippingRate {
+  id: string;
+  label: string;
+  deliveryEstimate: string;
+  fee: number;
+  isDefault: boolean;
+  freeShippingEligible: boolean;
+}
+
 export interface StoreSettings {
   storeName: string;
   currency: string;
   whatsappNumber: string;
   instagramUrl: string;
-  freeDeliveryThreshold: number;
-  deliveryFee: number;
   lowStockAt: number;
   discountCode: string;
   discountPercent: number;
   bank: BankDetails;
   announcement: Announcement;
   promoPopupEnabled: boolean;
+  shippingMultipleRatesEnabled: boolean;
+  shippingFreeAll: boolean;
+  shippingFreeThreshold: number;
+  shippingRates: ShippingRate[];
 }
 
 // Selection: { colour: 'gold', length: '18' }
@@ -109,6 +123,9 @@ export interface OrderCreatePayload {
   customer: CustomerDetails;
   paymentMethod: PaymentMethod;
   discountCode?: string | null;
+  // Ignored server-side when shippingMultipleRatesEnabled is off — see
+  // plans/09 §20.
+  shippingRateId?: string | null;
 }
 
 export interface OrderLine {
@@ -126,6 +143,7 @@ export interface OrderResult {
   subtotal: number;
   discountAmount: number;
   deliveryFee: number;
+  shippingLabel: string;
   total: number;
   paymentMethod: PaymentMethod;
   paymentStatus: string;
@@ -172,4 +190,7 @@ export interface Totals {
   totalRaw: number;
   totalLabel: string;
   freeDeliveryHint: string | null;
+  // The rate actually resolved and priced — null only when the store has no
+  // active shipping rate configured at all.
+  resolvedRate: ShippingRate | null;
 }

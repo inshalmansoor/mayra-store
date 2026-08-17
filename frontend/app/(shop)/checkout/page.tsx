@@ -11,6 +11,7 @@ import { useProducts } from "@/lib/useProducts";
 import { useSettings } from "@/lib/useSettings";
 import { buildCartLines, computeTotals } from "@/lib/pricing";
 import { createOrder, validateDiscount } from "@/lib/products";
+import { fmt } from "@/lib/format";
 import { ApiError } from "@/lib/api";
 import { consumePendingDiscount } from "@/lib/pendingDiscount";
 import { useToast } from "@/context/ToastContext";
@@ -58,6 +59,7 @@ export default function CheckoutPage() {
   const [discountError, setDiscountError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [conflictNote, setConflictNote] = useState<string | null>(null);
+  const [selectedRateId, setSelectedRateId] = useState<string | null>(null);
 
   useEffect(() => {
     // Reads a value the promo popup/announcement bar stashed in
@@ -69,6 +71,13 @@ export default function CheckoutPage() {
       applyDiscount(pending);
     }
   }, []);
+
+  useEffect(() => {
+    if (selectedRateId || !settings?.shippingRates?.length) return;
+    const def = settings.shippingRates.find((r) => r.isDefault) ?? settings.shippingRates[0];
+    if (def) setSelectedRateId(def.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings?.shippingRates]);
 
   if (!hydrated || loading) return <div style={{ padding: 60 }} />;
 
@@ -86,10 +95,13 @@ export default function CheckoutPage() {
 
   const settingsForTotals = {
     discountPercent: settings?.discountPercent ?? 20,
-    freeDeliveryThreshold: settings?.freeDeliveryThreshold ?? 5000,
-    deliveryFee: settings?.deliveryFee ?? 250,
+    shippingMultipleRatesEnabled: settings?.shippingMultipleRatesEnabled ?? false,
+    shippingFreeAll: settings?.shippingFreeAll ?? false,
+    shippingFreeThreshold: settings?.shippingFreeThreshold ?? 0,
+    shippingRates: settings?.shippingRates ?? [],
   };
-  const totals = computeTotals(cart, products, discountApplied, settingsForTotals);
+  const totals = computeTotals(cart, products, discountApplied, settingsForTotals, selectedRateId);
+  const showRateSelector = settingsForTotals.shippingMultipleRatesEnabled && settingsForTotals.shippingRates.length > 1;
 
   async function applyDiscount(codeRaw: string) {
     const code = codeRaw.trim();
@@ -156,6 +168,7 @@ export default function CheckoutPage() {
         paymentMethod: form.payMethod,
         // Card digits are NEVER sent — only the chosen method travels.
         discountCode: discountApplied ? discountInput.trim() : undefined,
+        shippingRateId: selectedRateId,
       });
 
       try {
@@ -246,6 +259,35 @@ export default function CheckoutPage() {
         )}
       </section>
 
+      {showRateSelector && (
+        <section style={{ marginBottom: 28 }}>
+          <h2 style={{ fontFamily: "var(--font-caps)", fontSize: 13, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 14 }}>Delivery speed</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {settingsForTotals.shippingRates.map((r) => {
+              const freeHere =
+                (settingsForTotals.shippingFreeAll ||
+                  (settingsForTotals.shippingFreeThreshold > 0 &&
+                    totals.subtotalRaw - totals.discountRaw >= settingsForTotals.shippingFreeThreshold)) &&
+                r.freeShippingEligible;
+              return (
+                <label key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, border: "1px solid var(--line)", borderRadius: 10, padding: "12px 14px", cursor: "pointer" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <input type="radio" name="shippingRate" checked={selectedRateId === r.id} onChange={() => setSelectedRateId(r.id)} />
+                    <span>
+                      <div style={{ fontFamily: "var(--font-body)", fontSize: 15 }}>{r.label}</div>
+                      {r.deliveryEstimate && (
+                        <div style={{ fontFamily: "var(--font-caps)", fontSize: 12, color: "var(--ink-soft)" }}>{r.deliveryEstimate}</div>
+                      )}
+                    </span>
+                  </span>
+                  <span style={{ fontFamily: "var(--font-display)", fontSize: 15 }}>{freeHere ? "Free" : fmt(r.fee)}</span>
+                </label>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       <section style={{ marginBottom: 28 }}>
         <h2 style={{ fontFamily: "var(--font-caps)", fontSize: 13, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 14 }}>Discount code</h2>
         <div style={{ display: "flex", gap: 8 }}>
@@ -273,7 +315,7 @@ export default function CheckoutPage() {
       <section style={{ borderTop: "1px solid var(--line)", paddingTop: 16, marginBottom: 24 }}>
         <Row label="Subtotal" value={totals.subtotalLabel} />
         {totals.discountRaw > 0 && <Row label="Discount" value={"−" + totals.discountLabel} />}
-        <Row label="Delivery" value={totals.deliveryLabel} />
+        <Row label={totals.resolvedRate ? `Delivery (${totals.resolvedRate.label})` : "Delivery"} value={totals.deliveryLabel} />
         <Row label="Total" value={totals.totalLabel} big />
       </section>
 
