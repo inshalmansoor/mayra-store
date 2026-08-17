@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 import httpx
 
 from ..ai.agent import (
+    dedupe_sku,
     dedupe_slug,
     existing_collections,
     run_first_turn,
@@ -41,8 +42,12 @@ def _require_ai_enabled():
 
 
 def _finalize(db: Session, out: AgentTurnOut) -> AgentTurnOut:
-    """Shared post-processing every turn goes through: slug dedup (§5) and
-    whole-turn rejection on constraint violations (§11)."""
+    """Shared post-processing every turn goes through: slug + SKU dedup
+    (§5) and whole-turn rejection on constraint violations (§11). Runs on
+    every turn, not just the last one — the draft's SKUs can change turn to
+    turn (e.g. the owner answering "3 sizes" adds new variantPlan entries),
+    so re-checking each time keeps whatever the owner is looking at always
+    valid to save, not just the final version."""
     problems = validate_draft_constraints(db, out.draft)
     if problems:
         raise HTTPException(
@@ -51,6 +56,18 @@ def _finalize(db: Session, out: AgentTurnOut) -> AgentTurnOut:
         )
     if out.draft.slug or out.draft.name:
         out.draft.slug = dedupe_slug(db, out.draft.slug, out.draft.name)
+
+    # product_variants.sku is unique across the WHOLE catalogue, not just
+    # this product — the agent has no way to know every SKU that already
+    # exists. Dedupe the product-level SKU first so it's in `taken` before
+    # any variant falls back to it (mirrors the fallback order save() uses
+    # on the frontend: entry.sku || draft.sku).
+    taken: set[str] = set()
+    if out.draft.sku:
+        out.draft.sku = dedupe_sku(db, out.draft.sku, taken)
+    for entry in out.draft.variant_plan:
+        if entry.state == "made":
+            entry.sku = dedupe_sku(db, entry.sku or out.draft.sku, taken)
     return out
 
 

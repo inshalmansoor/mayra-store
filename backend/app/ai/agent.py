@@ -247,3 +247,21 @@ def dedupe_slug(db: Session, proposed: str | None, name: str | None) -> str:
         candidate = f"{base}-{n}"
         n += 1
     return candidate
+
+
+def dedupe_sku(db: Session, proposed: str | None, taken_this_turn: set[str]) -> str:
+    """SKUs are unique across product_variants for the WHOLE catalogue, not
+    just this product — the exact same collision class as slugs, but the
+    agent has no way to know every SKU that already exists, and hit a real
+    "That SKU is already in use." save failure in practice. Checked and
+    fixed server-side before the owner ever sees it, same as dedupe_slug.
+    `taken_this_turn` also catches two of THIS draft's own variants
+    proposing the same SKU as each other, before either touches the DB."""
+    base = (proposed or "").strip() or f"MYR-NEW-{uuid.uuid4().hex[:6].upper()}"
+    candidate = base
+    n = 2
+    while candidate in taken_this_turn or db.query(ProductVariant).filter(ProductVariant.sku == candidate).first() is not None:
+        candidate = f"{base}-{n}"
+        n += 1
+    taken_this_turn.add(candidate)
+    return candidate
