@@ -11,7 +11,7 @@ import type {
   AdminShippingRate,
   AdminVariant,
 } from "./admin-types";
-import type { AiProductDraft, AiQuestion, AiTurnResult } from "./ai-types";
+import type { AiEditChatMessage, AiEditTurnResult, AiProductDraft, AiQuestion, AiTurnResult } from "./ai-types";
 
 export async function adminLogin(password: string): Promise<{ ok: true }> {
   return api.post("/api/admin/login", { password });
@@ -219,4 +219,12 @@ export async function adminAiContinueDraft(payload: AiContinueInput): Promise<Ai
 
 export async function adminAiRegenerateCopy(productId: string): Promise<AiTurnResult> {
   return api.post(`/api/admin/ai/regenerate-copy/${productId}`);
+}
+
+export async function adminAiEditProduct(
+  productId: string,
+  message: string,
+  history: AiEditChatMessage[],
+): Promise<AiEditTurnResult> {
+  return api.post(`/api/admin/ai/edit-product/${productId}`, { message, history });
 }

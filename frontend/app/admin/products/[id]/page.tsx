@@ -3,15 +3,19 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
+  adminAddVariant,
+  adminAiEditProduct,
   adminAiRegenerateCopy,
   adminAiStatus,
   adminDeactivateProduct,
   adminDeleteProductPermanently,
   adminGetProduct,
   adminUpdateProduct,
+  adminUpdateVariant,
 } from "@/lib/admin-api";
 import type { AdminProduct } from "@/lib/admin-types";
-import type { AiSuggestion } from "@/lib/ai-types";
+import type { AiEditChatMessage, AiEditProposal, AiSuggestion } from "@/lib/ai-types";
+import { editProposalIsEmpty } from "@/lib/ai-types";
 import { ApiError } from "@/lib/api";
 import VariantsEditor from "@/components/admin/VariantsEditor";
 import ImagesEditor from "@/components/admin/ImagesEditor";
@@ -110,6 +114,10 @@ export default function EditProductPage() {
         </div>
       </div>
 
+      <Section title="AI edit assistant">
+        <AiEditChat product={product} onApplied={refresh} />
+      </Section>
+
       <Section title="Details">
         <DetailsForm product={product} onSave={saveDetails} saving={savingDetails} />
         {saved && <p style={{ color: "#2d7a3a", fontSize: 12, marginTop: 8 }}>Saved.</p>}
@@ -137,6 +145,163 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h2 style={{ fontSize: 15, margin: "0 0 14px" }}>{title}</h2>
       {children}
     </section>
+  );
+}
+
+function joinVariantKey(values: string[]): string {
+  return values.length ? values.join("|") : "default";
+}
+
+function AiEditChat({ product, onApplied }: { product: AdminProduct; onApplied: () => void }) {
+  const [aiAvailable, setAiAvailable] = useState(false);
+  const [messages, setMessages] = useState<AiEditChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [proposal, setProposal] = useState<AiEditProposal | null>(null);
+  const [applying, setApplying] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
+
+  useEffect(() => {
+    adminAiStatus().then((s) => setAiAvailable(s.enabled)).catch(() => setAiAvailable(false));
+  }, []);
+
+  async function send() {
+    const text = input.trim();
+    if (!text || sending) return;
+    setInput("");
+    setSending(true);
+    setError(null);
+    setApplyError(null);
+    const history = messages;
+    setMessages((m) => [...m, { role: "user", content: text }]);
+    try {
+      const out = await adminAiEditProduct(product.id, text, history);
+      setMessages((m) => [...m, { role: "assistant", content: out.message }]);
+      setProposal(editProposalIsEmpty(out.proposal) ? null : out.proposal);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message2 : "Could not reach the AI.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function apply() {
+    if (!proposal) return;
+    setApplying(true);
+    setApplyError(null);
+    try {
+      const patch = proposal.productPatch;
+      const productUpdate: Record<string, unknown> = {};
+      if (patch.name !== null) productUpdate.name = patch.name;
+      if (patch.category !== null) productUpdate.category = patch.category;
+      if (patch.collectionChanged) productUpdate.collection = patch.collection;
+      if (patch.basePrice !== null) productUpdate.basePrice = patch.basePrice;
+      if (patch.material !== null) productUpdate.material = patch.material;
+      if (patch.blurb !== null) productUpdate.blurb = patch.blurb;
+      if (patch.care !== null) productUpdate.care = patch.care;
+      if (patch.isFeatured !== null) productUpdate.isFeatured = patch.isFeatured;
+      if (patch.isActive !== null) productUpdate.isActive = patch.isActive;
+      if (Object.keys(productUpdate).length > 0) {
+        await adminUpdateProduct(product.id, productUpdate);
+      }
+      for (const vp of proposal.variantPatches) {
+        const body: { stock?: number; sku?: string } = {};
+        if (vp.stock !== null) body.stock = vp.stock;
+        if (vp.sku !== null) body.sku = vp.sku;
+        await adminUpdateVariant(vp.variantId, body);
+      }
+      for (const nv of proposal.newVariants) {
+        await adminAddVariant(product.id, joinVariantKey(nv.values), nv.sku ?? "", nv.stock);
+      }
+      setProposal(null);
+      setMessages((m) => [...m, { role: "assistant", content: "Applied." }]);
+      onApplied();
+    } catch (e) {
+      setApplyError(e instanceof ApiError ? e.message2 : "Could not apply these changes — some may have partially gone through, check Details/Variants below.");
+      onApplied();
+    } finally {
+      setApplying(false);
+    }
+  }
+
+  if (!aiAvailable) return null;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <p style={{ fontSize: 11, color: "#8a8f99", margin: 0 }}>
+        Tell it what to change — price, stock, material, category, collection, or add a variant combination the product already has as an option. Nothing is
+        saved until you click Apply below. Photos aren&apos;t handled here — use the Images section.
+      </p>
+      {messages.length > 0 && (
+        <div style={{ background: "#f4f5f7", borderRadius: 8, padding: 10, display: "flex", flexDirection: "column", gap: 8, maxHeight: 260, overflowY: "auto" }}>
+          {messages.map((m, i) => (
+            <div key={i} style={{ fontSize: 13, alignSelf: m.role === "user" ? "flex-end" : "flex-start", maxWidth: "85%" }}>
+              <div
+                style={{
+                  background: m.role === "user" ? "#1a1a1a" : "#fff",
+                  color: m.role === "user" ? "#fff" : "#1a1a1a",
+                  border: m.role === "user" ? "none" : "1px solid #e2e4e9",
+                  borderRadius: 8,
+                  padding: "7px 10px",
+                }}
+              >
+                {m.content}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {proposal && (
+        <div style={{ background: "#fff8e6", border: "1px solid #eecf8a", borderRadius: 8, padding: 10 }}>
+          <strong style={{ fontSize: 12 }}>Proposed changes</strong>
+          <ul style={{ margin: "6px 0 0", paddingLeft: 18, fontSize: 12 }}>
+            {proposal.summary.map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ul>
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <button
+              onClick={apply}
+              disabled={applying}
+              style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px", fontSize: 12, cursor: applying ? "wait" : "pointer" }}
+            >
+              {applying ? "Applying…" : "Apply"}
+            </button>
+            <button
+              onClick={() => setProposal(null)}
+              disabled={applying}
+              style={{ background: "#fff", border: "1px solid #d0d3d9", borderRadius: 6, padding: "6px 12px", fontSize: 12, cursor: "pointer" }}
+            >
+              Dismiss
+            </button>
+          </div>
+          {applyError && <p style={{ color: "#c0392b", fontSize: 12, marginTop: 6 }}>{applyError}</p>}
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") send();
+          }}
+          placeholder="e.g. set the price to 1200, or mark gold size 7 as out of stock"
+          style={{ ...inputStyle, flex: 1 }}
+          disabled={sending}
+        />
+        <button
+          onClick={send}
+          disabled={sending || !input.trim()}
+          style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 6, padding: "9px 16px", fontSize: 13, cursor: sending ? "wait" : "pointer" }}
+        >
+          {sending ? "Thinking…" : "Send"}
+        </button>
+      </div>
+      {error && <p style={{ color: "#c0392b", fontSize: 12, margin: 0 }}>{error}</p>}
+    </div>
   );
 }
 

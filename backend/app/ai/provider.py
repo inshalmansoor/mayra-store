@@ -13,7 +13,6 @@ import httpx
 from fastapi import HTTPException, status
 
 from ..config import settings
-from .schema import AGENT_TURN_RESPONSE_SCHEMA
 
 # gemini-3.6-flash (tried first) was empirically slow and occasionally
 # overloaded on this account: five real calls came back in 22-52s, one a 503
@@ -47,10 +46,13 @@ class ProviderError(Exception):
 async def generate_turn(
     system_instruction: str,
     contents: list[dict],
+    response_schema: dict,
 ) -> dict:
     """contents is the Gemini `contents` array — a list of
-    {"role": "user"|"model", "parts": [...]} turns. Returns the parsed JSON
-    dict (not yet Pydantic-validated — the caller does that)."""
+    {"role": "user"|"model", "parts": [...]} turns. response_schema is
+    whichever agent's Gemini responseSchema dict applies to this call (the
+    draft agent and the edit agent use different shapes). Returns the parsed
+    JSON dict (not yet Pydantic-validated — the caller does that)."""
     if not settings.AI_ENABLED:
         raise ProviderError("AI assist is turned off.")
     if settings.AI_PROVIDER != "gemini":
@@ -64,7 +66,7 @@ async def generate_turn(
         "contents": contents,
         "generationConfig": {
             "responseMimeType": "application/json",
-            "responseSchema": AGENT_TURN_RESPONSE_SCHEMA,
+            "responseSchema": response_schema,
             "thinkingConfig": {"thinkingBudget": THINKING_BUDGET},
         },
     }

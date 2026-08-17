@@ -59,6 +59,59 @@ export interface AiTurnResult {
   done: boolean;
 }
 
+// --- Product-edit chat (mirrors backend/app/ai/edit_models.py) ---
+
+export interface AiProductPatch {
+  name: string | null;
+  category: string | null;
+  collection: string | null;
+  collectionChanged: boolean;
+  basePrice: number | null;
+  material: string | null;
+  blurb: string | null;
+  care: string[] | null;
+  isFeatured: boolean | null;
+  isActive: boolean | null;
+}
+
+export interface AiVariantPatch {
+  variantId: string;
+  stock: number | null;
+  sku: string | null;
+}
+
+export interface AiNewVariant {
+  values: string[];
+  stock: number;
+  sku: string | null;
+}
+
+export interface AiEditProposal {
+  productPatch: AiProductPatch;
+  variantPatches: AiVariantPatch[];
+  newVariants: AiNewVariant[];
+  summary: string[];
+}
+
+export interface AiEditTurnResult {
+  message: string;
+  proposal: AiEditProposal;
+}
+
+export interface AiEditChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export function editProposalIsEmpty(p: AiEditProposal): boolean {
+  const patch = p.productPatch;
+  const patchHasChange = Object.entries(patch).some(([k, v]) => {
+    if (k === "collectionChanged") return false;
+    return v !== null;
+  });
+  return !patchHasChange && p.variantPatches.length === 0 && p.newVariants.length === 0;
+}
+
 export const EMPTY_AI_DRAFT: AiProductDraft = {
   name: null,
   slug: null,

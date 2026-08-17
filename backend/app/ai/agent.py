@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from ..models import Product, ProductVariant
 from .models import AgentTurnOut, ProductDraft
 from .provider import generate_turn, image_part, text_part
+from .schema import AGENT_TURN_RESPONSE_SCHEMA
 
 CATEGORIES = ["necklaces", "bracelets", "rings", "earrings"]
 
@@ -131,7 +132,7 @@ async def run_first_turn(db: Session, description: str, image_bytes: bytes, mime
             ],
         }
     ]
-    raw = await generate_turn(system, contents)
+    raw = await generate_turn(system, contents, AGENT_TURN_RESPONSE_SCHEMA)
     return AgentTurnOut.model_validate(raw)
 
 
@@ -167,7 +168,7 @@ async def run_next_turn(
             ],
         }
     ]
-    raw = await generate_turn(system, contents)
+    raw = await generate_turn(system, contents, AGENT_TURN_RESPONSE_SCHEMA)
     out = AgentTurnOut.model_validate(raw)
     if not out.visual_facts:
         out.visual_facts = visual_facts  # never let a later turn blank this out
@@ -225,7 +226,7 @@ async def run_regenerate_copy(
         parts.append(image_part(image_bytes, mime_type))
     parts.append(text_part("Propose improved name, blurb, and alt text for this listing."))
     contents = [{"role": "user", "parts": parts}]
-    raw = await generate_turn(system, contents)
+    raw = await generate_turn(system, contents, AGENT_TURN_RESPONSE_SCHEMA)
     out = AgentTurnOut.model_validate(raw)
     # Defense in depth: only copy fields survive, no matter what the model
     # actually returned. See plans/09 §13.

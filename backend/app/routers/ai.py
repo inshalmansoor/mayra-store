@@ -8,7 +8,7 @@ endpoints once the owner reviews and saves. See plans/09 §2.
 import uuid
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 import httpx
 
 from ..ai.agent import (
@@ -20,11 +20,13 @@ from ..ai.agent import (
     run_regenerate_copy,
     validate_draft_constraints,
 )
+from ..ai.edit_agent import finalize_edit_proposal, run_edit_turn, validate_edit_proposal
+from ..ai.edit_models import EditTurnIn, EditTurnOut
 from ..ai.models import AgentTurnOut, ContinueTurnIn
 from ..ai.provider import ProviderError, to_http_exception
 from ..config import settings
 from ..db import get_db
-from ..models import Product
+from ..models import Product, ProductOption
 from ..security import get_current_admin
 
 router = APIRouter(prefix="/api/admin/ai", tags=["admin-ai"], dependencies=[Depends(get_current_admin)])
@@ -139,6 +141,36 @@ async def regenerate_copy(product_id: str, db: Session = Depends(get_db)):
     except ProviderError as e:
         raise to_http_exception(e)
     return out
+
+
+@router.post("/edit-product/{product_id}", response_model=EditTurnOut)
+async def edit_product_chat(product_id: str, payload: EditTurnIn, db: Session = Depends(get_db)):
+    _require_ai_enabled()
+    try:
+        pid = uuid.UUID(product_id)
+    except ValueError:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid id.")
+    product = (
+        db.query(Product)
+        .options(selectinload(Product.options).selectinload(ProductOption.values), selectinload(Product.variants))
+        .filter(Product.id == pid)
+        .first()
+    )
+    if not product:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Product not found.")
+
+    try:
+        out = await run_edit_turn(db, product, payload.message, [h.model_dump() for h in payload.history])
+    except ProviderError as e:
+        raise to_http_exception(e)
+
+    problems = validate_edit_proposal(db, product, out.proposal)
+    if problems:
+        raise HTTPException(
+            status.HTTP_502_BAD_GATEWAY,
+            "The AI's response didn't pass validation (" + "; ".join(problems) + ") — please try again.",
+        )
+    return finalize_edit_proposal(db, product, out)
 
 
 @router.get("/collections")
