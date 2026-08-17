@@ -15,19 +15,20 @@ from fastapi import HTTPException, status
 from ..config import settings
 from .schema import AGENT_TURN_RESPONSE_SCHEMA
 
-# gemini-3.6-flash is, empirically, slow and occasionally overloaded on this
-# account: five real measured calls came back in 22-52s, one of them a 503
-# "high demand" from Google's own servers. gemini-2.5-flash (which would
-# otherwise be the obvious lower-latency choice) returns 404 "no longer
-# available to new users" — 3.6 is the only Flash-tier model this key can
-# reach at all, so the timeout has to be sized around ITS real behavior,
-# not an assumption. vercel.json's maxDuration is raised to 60s to match.
-GEMINI_TIMEOUT = 55.0
+# gemini-3.6-flash (tried first) was empirically slow and occasionally
+# overloaded on this account: five real calls came back in 22-52s, one a 503
+# "high demand". gemini-2.5-flash 404s as "no longer available to new
+# users". gemini-flash-lite-latest — an alias that tracks Google's current
+# best lite model, so it shouldn't need re-verifying every time their
+# lineup shifts — replied in 4-6s across every real test, same output
+# quality, so that's what's actually configured (see .env AI_MODEL). This
+# timeout still carries real margin over that, not a tight fit.
+GEMINI_TIMEOUT = 25.0
 
-# Cuts thoughtsTokenCount from ~1300 to ~0 in testing (roughly halves total
-# token usage) without a measurable effect on wall-clock latency — the slow
-# part is elsewhere. thinkingBudget: 0 (fully off) returns 400 INVALID_ARGUMENT
-# on this model, so a small non-zero floor is what it actually accepts.
+# Harmless on gemini-flash-lite-latest (confirmed: 200 OK, same ~5s
+# latency) — lite tiers generally don't do extended thinking regardless of
+# this setting. Kept so a future model swap that DOES support thinking
+# doesn't silently burn a few hundred extra tokens per call by default.
 THINKING_BUDGET = 512
 
 # "This model is currently experiencing high demand... usually temporary" is

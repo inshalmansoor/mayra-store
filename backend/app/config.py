@@ -59,7 +59,7 @@ class Settings(BaseSettings):
     # missing key never breaks the (always-available) manual form. ---------
     AI_ENABLED: bool = False
     AI_PROVIDER: str = "gemini"
-    AI_MODEL: str = "gemini-3.6-flash"
+    AI_MODEL: str = "gemini-flash-lite-latest"
     AI_MAX_TURNS: int = 8
     GEMINI_API_KEY: str = ""
 

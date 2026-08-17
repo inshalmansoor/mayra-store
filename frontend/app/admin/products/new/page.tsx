@@ -120,6 +120,15 @@ function AiAssistFlow({ onBack }: { onBack: () => void }) {
   const started = chat.length > 0;
   const startingSeconds = useElapsedSeconds(starting);
   const thinkingSeconds = useElapsedSeconds(thinking);
+  // `started` flips true the instant start() sets `chat`, well before the
+  // first response arrives — the chat view renders immediately, so its own
+  // "is anything happening" indicator has to account for `starting` too,
+  // not just `thinking` (the state used for every turn AFTER the first).
+  // Without this the chat pane sits there looking idle for the entire
+  // first request, which is exactly what looked like "AI processing didn't
+  // start" from a screen a user could actually see.
+  const busy = starting || thinking;
+  const busySeconds = starting ? startingSeconds : thinkingSeconds;
 
   function pickFile(f: File | null) {
     setFile(f);
@@ -298,9 +307,9 @@ function AiAssistFlow({ onBack }: { onBack: () => void }) {
               </div>
             </div>
           ))}
-          {thinking && (
+          {busy && (
             <div style={{ fontSize: 12, color: "#8a8f99" }}>
-              Thinking… ({thinkingSeconds}s) — can take up to a minute on the free tier, it hasn&rsquo;t stalled.
+              {starting ? "Looking at the photo…" : "Thinking…"} ({busySeconds}s) — can take up to a minute on the free tier, it hasn&rsquo;t stalled.
             </div>
           )}
         </div>
@@ -316,7 +325,7 @@ function AiAssistFlow({ onBack }: { onBack: () => void }) {
           </div>
         )}
 
-        {!done && (
+        {!done && !starting && (
           <div style={{ display: "flex", gap: 8 }}>
             <input
               value={reply}
