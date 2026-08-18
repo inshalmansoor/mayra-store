@@ -468,7 +468,7 @@ def resend_email(order_id: str, db: Session = Depends(get_db)):
     o = db.query(Order).options(selectinload(Order.items)).filter(Order.id == _uid(order_id)).first()
     if not o:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Order not found.")
-    email_status, email_error = send_order_emails(o, [])
+    email_status, email_error = send_order_emails(db, o, [])
     o.email_status = email_status
     o.email_error = email_error
     db.commit()

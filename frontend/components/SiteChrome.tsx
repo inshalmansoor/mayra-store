@@ -20,7 +20,7 @@ export default function SiteChrome({
       {settings && <AnnouncementBar text={settings.announcement.text} enabled={settings.announcement.enabled} />}
       {settings?.promoPopupEnabled && <PromoPopup discountCode={settings.discountCode} />}
       <main style={{ minHeight: "60vh" }}>{children}</main>
-      <Footer />
+      <Footer whatsappNumber={settings?.whatsappNumber ?? ""} />
       <MobileTabBar />
     </>
   );

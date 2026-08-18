@@ -59,7 +59,8 @@ export default function CartPage() {
 
   const subtotal = lines.reduce((s, l) => s + (l.available ? l.lineTotalRaw : 0), 0);
   const hasUnavailable = lines.some((l) => !l.available);
-  const whatsappUrl = buildOrderWhatsAppUrl(lines, fmt(subtotal));
+  const whatsappNumber = settings?.whatsappNumber ?? "";
+  const whatsappUrl = buildOrderWhatsAppUrl(lines, fmt(subtotal), whatsappNumber);
 
   // No shipping choice has been made yet here — show what the default rate
   // would cost, same resolution the checkout page falls back to. See
@@ -169,7 +170,7 @@ export default function CartPage() {
         >
           Checkout
         </button>
-        <WhatsAppButton href={whatsappUrl} />
+        {whatsappNumber && <WhatsAppButton href={whatsappUrl} />}
         {hasUnavailable && (
           <p style={{ fontFamily: "var(--font-caps)", fontSize: 12, color: "var(--clay-500)", textAlign: "center" }}>
             Remove sold-out items before checking out.

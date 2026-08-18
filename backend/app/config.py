@@ -41,19 +41,16 @@ class Settings(BaseSettings):
     # --- Store rules -----------------------------------------------------
     STORE_NAME: str = "Mayra Store"
     STORE_CURRENCY: str = "PKR"
-    WHATSAPP_NUMBER: str
     INSTAGRAM_URL: str
     # Delivery fee/threshold moved to the shipping_rates table + Settings
     # (shipping_free_threshold) — plans/09 §15-17. No longer read from env.
+    # WhatsApp number and bank transfer details are also DB-backed settings
+    # now (admin-editable, see /admin/settings) — not read from env. See
+    # backend/app/routers/public.py's `_setting()` and admin.py's generic
+    # PATCH /settings/{key}.
     LOW_STOCK_AT: int = 3
     DISCOUNT_CODE: str = "MAYRA20"
     DISCOUNT_PERCENT: int = 20
-
-    # --- Bank transfer -----------------------------------------------------
-    BANK_NAME: str = ""
-    BANK_ACCOUNT_TITLE: str = ""
-    BANK_ACCOUNT_NUMBER: str = ""
-    BANK_IBAN: str = ""
 
     # --- AI product agent — plans/09 §10. Kill switch defaults to off so a
     # missing key never breaks the (always-available) manual form. ---------

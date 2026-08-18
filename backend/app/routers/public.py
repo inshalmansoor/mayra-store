@@ -69,16 +69,16 @@ def get_settings_endpoint(db: Session = Depends(get_db)):
     return SettingsOut(
         store_name=settings.STORE_NAME,
         currency=settings.STORE_CURRENCY,
-        whatsapp_number=settings.WHATSAPP_NUMBER,
+        whatsapp_number=_setting(db, "whatsapp_number", ""),
         instagram_url=settings.INSTAGRAM_URL,
         low_stock_at=settings.LOW_STOCK_AT,
         discount_code=settings.DISCOUNT_CODE,
         discount_percent=settings.DISCOUNT_PERCENT,
         bank=BankOut(
-            name=settings.BANK_NAME,
-            account_title=settings.BANK_ACCOUNT_TITLE,
-            account_number=settings.BANK_ACCOUNT_NUMBER,
-            iban=settings.BANK_IBAN,
+            name=_setting(db, "bank_name", ""),
+            account_title=_setting(db, "bank_account_title", ""),
+            account_number=_setting(db, "bank_account_number", ""),
+            iban=_setting(db, "bank_iban", ""),
         ),
         announcement=AnnouncementOut(
             enabled=_setting(db, "announcement_enabled", "true") == "true",

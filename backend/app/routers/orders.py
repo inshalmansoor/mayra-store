@@ -164,7 +164,7 @@ def create_order(payload: OrderCreateIn, db: Session = Depends(get_db)):
     # an order that already succeeded must not be undone by a slow mail API.
     # See plans/03-backend-fastapi.md §4.4 and plans/06-email.md §6.
     try:
-        email_status, email_error = send_order_emails(order, low_stock_lines)
+        email_status, email_error = send_order_emails(db, order, low_stock_lines)
     except Exception as e:  # noqa: BLE001 — never let email crash a completed order
         log.exception("send_order_emails raised for %s", order.order_number)
         email_status, email_error = "failed", str(e)[:2000]

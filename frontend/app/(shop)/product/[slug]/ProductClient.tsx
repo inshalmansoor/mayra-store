@@ -15,6 +15,7 @@ import {
 } from "@/lib/variants";
 import { fmt } from "@/lib/format";
 import { buildOrderWhatsAppUrl } from "@/lib/whatsapp";
+import { useSettings } from "@/lib/useSettings";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useToast } from "@/context/ToastContext";
@@ -34,6 +35,8 @@ export default function ProductClient({ product, related, lowStockAt }: { produc
   const { isWished, toggleWish } = useWishlist();
   const { pushToast } = useToast();
   const router = useRouter();
+  const { settings } = useSettings();
+  const whatsappNumber = settings?.whatsappNumber ?? "";
 
   const initial = firstAvailable(product); // null if the whole product is sold out — edge case 3/4
   const [selection, setSelection] = useState<Selection>(initial || {});
@@ -117,6 +120,7 @@ export default function ProductClient({ product, related, lowStockAt }: { produc
       },
     ],
     fmt(price * qty),
+    whatsappNumber,
   );
 
   return (
@@ -216,7 +220,7 @@ export default function ProductClient({ product, related, lowStockAt }: { produc
                 >
                   Add to bag
                 </button>
-                <WhatsAppButton href={whatsappUrl} />
+                {whatsappNumber && <WhatsAppButton href={whatsappUrl} />}
               </div>
             </>
           )}

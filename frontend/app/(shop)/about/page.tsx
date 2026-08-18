@@ -1,11 +1,14 @@
 import Image from "next/image";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { generalInquiryUrl } from "@/lib/whatsapp";
+import { getSettings } from "@/lib/products";
 
 export const metadata = { title: "About" };
 
-export default function AboutPage() {
+export default async function AboutPage() {
   const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || "https://www.instagram.com/mayra_.jewels/";
+  const settings = await getSettings().catch(() => null);
+  const whatsappNumber = settings?.whatsappNumber ?? "";
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "40px 20px 80px" }}>
@@ -55,7 +58,7 @@ export default function AboutPage() {
         Contact
       </h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 320 }}>
-        <WhatsAppButton href={generalInquiryUrl()} />
+        {whatsappNumber && <WhatsAppButton href={generalInquiryUrl(whatsappNumber)} />}
         <a
           href={instagramUrl}
           target="_blank"

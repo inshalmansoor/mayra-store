@@ -12,11 +12,14 @@ import type { OrderResult } from "@/lib/types";
 import { fmt } from "@/lib/format";
 import { buildOrderConfirmedWhatsAppUrl } from "@/lib/whatsapp";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import { useSettings } from "@/lib/useSettings";
 
 export default function OrderConfirmationPage() {
   const params = useParams<{ orderNumber: string }>();
   const orderNumber = decodeURIComponent(params.orderNumber);
   const [order, setOrder] = useState<OrderResult | null | undefined>(undefined);
+  const { settings } = useSettings();
+  const whatsappNumber = settings?.whatsappNumber ?? "";
 
   useEffect(() => {
     // sessionStorage is a browser API unavailable during render — reading it
@@ -87,7 +90,7 @@ export default function OrderConfirmationPage() {
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <WhatsAppButton href={buildOrderConfirmedWhatsAppUrl(orderNumber)} label="Message us about this order" />
+        {whatsappNumber && <WhatsAppButton href={buildOrderConfirmedWhatsAppUrl(orderNumber, whatsappNumber)} label="Message us about this order" />}
         <Link
           href="/shop"
           style={{ display: "inline-block", background: "var(--gold-500)", color: "#2e2b25", padding: "13px 20px", borderRadius: 999, fontFamily: "var(--font-caps)", fontSize: 13, letterSpacing: "0.06em", textTransform: "uppercase" }}

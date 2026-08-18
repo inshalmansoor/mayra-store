@@ -8,6 +8,11 @@ const KEYS = [
   { key: "announcement_text", label: "Announcement text" },
   { key: "promo_popup_enabled", label: "Promo popup enabled", bool: true },
   { key: "about_intro", label: "About page intro (optional override)" },
+  { key: "whatsapp_number", label: "WhatsApp number (digits only, with country code, e.g. 923378418670)" },
+  { key: "bank_name", label: "Bank name" },
+  { key: "bank_account_title", label: "Bank account title" },
+  { key: "bank_account_number", label: "Bank account number" },
+  { key: "bank_iban", label: "Bank IBAN" },
 ];
 
 export default function AdminSettingsPage() {
@@ -29,9 +34,9 @@ export default function AdminSettingsPage() {
     <div style={{ maxWidth: 560 }}>
       <h1 style={{ fontSize: 22, marginBottom: 20 }}>Settings</h1>
       <p style={{ fontSize: 13, color: "#8a8f99", marginBottom: 20 }}>
-        Discount code, WhatsApp number and bank details live in the server&rsquo;s .env file, not here — they&rsquo;re
-        rules the checkout enforces, not display text. Shipping rates and free-shipping rules have their own page —
-        see Shipping in the sidebar.
+        The discount code and percentage still live in the server&rsquo;s .env file — they&rsquo;re rules the
+        checkout enforces, not display text. Shipping rates and free-shipping rules have their own page — see
+        Shipping in the sidebar. Bank details are shown empty on the storefront until you fill them in below.
       </p>
       <div style={{ background: "#fff", border: "1px solid #e2e4e9", borderRadius: 8, padding: 18, display: "flex", flexDirection: "column", gap: 16 }}>
         {KEYS.map((k) => (

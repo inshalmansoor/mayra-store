@@ -1,7 +1,7 @@
 import Link from "next/link";
 import InstagramStrip from "./InstagramStrip";
 
-export default function Footer() {
+export default function Footer({ whatsappNumber }: { whatsappNumber: string }) {
   return (
     <footer>
       <InstagramStrip />
@@ -60,11 +60,13 @@ export default function Footer() {
               Contact
             </div>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-              <li>
-                <a href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}`} style={{ color: "#f5ead8" }}>
-                  WhatsApp
-                </a>
-              </li>
+              {whatsappNumber && (
+                <li>
+                  <a href={`https://wa.me/${whatsappNumber}`} style={{ color: "#f5ead8" }}>
+                    WhatsApp
+                  </a>
+                </li>
+              )}
               <li>
                 <a href={process.env.NEXT_PUBLIC_INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" style={{ color: "#f5ead8" }}>
                   Instagram

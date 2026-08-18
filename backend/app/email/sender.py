@@ -12,9 +12,10 @@ from pathlib import Path
 
 import httpx
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from sqlalchemy.orm import Session
 
 from ..config import settings
-from ..models import Order
+from ..models import Order, Setting
 
 log = logging.getLogger("mayra.email")
 
@@ -50,27 +51,32 @@ def send_email(to_email: str, to_name: str, subject: str, html: str, reply_to: s
     return r.json().get("messageId", "")
 
 
-def _order_context(order: Order) -> dict:
+def _setting(db: Session, key: str, default: str = "") -> str:
+    row = db.query(Setting).filter(Setting.key == key).first()
+    return row.value if row else default
+
+
+def _order_context(db: Session, order: Order) -> dict:
     return {
         "order": order,
         "fmt": _fmt,
         "store_name": settings.STORE_NAME,
-        "whatsapp_number": settings.WHATSAPP_NUMBER,
+        "whatsapp_number": _setting(db, "whatsapp_number", ""),
         "instagram_url": settings.INSTAGRAM_URL,
         "bank": {
-            "name": settings.BANK_NAME,
-            "account_title": settings.BANK_ACCOUNT_TITLE,
-            "account_number": settings.BANK_ACCOUNT_NUMBER,
-            "iban": settings.BANK_IBAN,
+            "name": _setting(db, "bank_name", ""),
+            "account_title": _setting(db, "bank_account_title", ""),
+            "account_number": _setting(db, "bank_account_number", ""),
+            "iban": _setting(db, "bank_iban", ""),
         },
         "low_stock_at": settings.LOW_STOCK_AT,
         "admin_url": "/admin/orders",
     }
 
 
-def send_customer_confirmation(order: Order) -> str:
+def send_customer_confirmation(db: Session, order: Order) -> str:
     tpl = _env.get_template("customer_confirmation.html")
-    html = tpl.render(**_order_context(order))
+    html = tpl.render(**_order_context(db, order))
     first_name = order.customer_name.split(" ")[0]
     return send_email(
         to_email=order.customer_email,
@@ -81,9 +87,9 @@ def send_customer_confirmation(order: Order) -> str:
     )
 
 
-def send_owner_notification(order: Order, low_stock_lines: list[str]) -> str:
+def send_owner_notification(db: Session, order: Order, low_stock_lines: list[str]) -> str:
     tpl = _env.get_template("owner_notification.html")
-    ctx = _order_context(order)
+    ctx = _order_context(db, order)
     ctx["low_stock_lines"] = low_stock_lines
     html = tpl.render(**ctx)
     return send_email(
@@ -95,21 +101,21 @@ def send_owner_notification(order: Order, low_stock_lines: list[str]) -> str:
     )
 
 
-def send_order_emails(order: Order, low_stock_lines: list[str]) -> tuple[str, str | None]:
+def send_order_emails(db: Session, order: Order, low_stock_lines: list[str]) -> tuple[str, str | None]:
     """Returns (email_status, email_error). Never raises — callers commit the
     order first and call this after, recording whatever happens here."""
     customer_ok = owner_ok = False
     errors: list[str] = []
 
     try:
-        send_customer_confirmation(order)
+        send_customer_confirmation(db, order)
         customer_ok = True
     except Exception as e:  # noqa: BLE001
         log.exception("customer confirmation email failed for %s", order.order_number)
         errors.append(f"customer: {e}")
 
     try:
-        send_owner_notification(order, low_stock_lines)
+        send_owner_notification(db, order, low_stock_lines)
         owner_ok = True
     except Exception as e:  # noqa: BLE001
         log.exception("owner notification email failed for %s", order.order_number)
